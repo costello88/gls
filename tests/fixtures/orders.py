@@ -1,0 +1,30 @@
+def make_order(
+    order_id=1001,
+    order_number="#1001",
+    name="Jan Peeters",
+    company="",
+    address1="Kerkstraat 12",
+    zip_code="2000",
+    city="Antwerpen",
+    country_code="BE",
+    phone="+32470123456",
+    email="jan@voorbeeld.be",
+):
+    return {
+        "id": order_id,
+        "order_number": order_number.lstrip("#"),
+        "name": order_number,
+        "financial_status": "paid",
+        "fulfillment_status": None,
+        "contact_email": email,
+        "customer": {"email": email, "phone": phone},
+        "shipping_address": {
+            "name": name,
+            "company": company,
+            "address1": address1,
+            "zip": zip_code,
+            "city": city,
+            "country_code": country_code,
+            "phone": phone,
+        },
+    }
