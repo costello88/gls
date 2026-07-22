@@ -301,7 +301,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'gls_sync.address'`
 import re
 
 _HOUSE_NUMBER_RE = re.compile(
-    r"^(?P<street>.*\S)\s+(?P<number>\d+[A-Za-z]?(?:\s+bus\s+\d+)?)\s*$"
+    r"^(?P<street>.+?\S)\s+(?P<number>\d+[A-Za-z]?(?:\s+bus\s+\d+)?)\s*$"
 )
 
 
