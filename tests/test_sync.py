@@ -33,6 +33,7 @@ def test_order_to_row_maps_fields():
     assert row["Referentie"] == "#1042"
     assert row["Gewicht"] == "1.5"
     assert row["Aantal colli"] == "1"
+    assert row["Verpakking"] == "PCO"
 
 
 class FakeClient:

@@ -6,6 +6,7 @@ def test_pending_columns_order():
     assert PENDING_COLUMNS == [
         "Naam", "Bedrijf", "Straat", "Huisnummer", "Postcode", "Plaats",
         "Land", "Telefoon", "Email", "Referentie", "Gewicht", "Aantal colli",
+        "Verpakking",
     ]
 
 

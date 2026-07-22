@@ -7,6 +7,9 @@ from gls_sync.state import SyncState
 from gls_sync.validate import check_row
 
 
+PACKAGE_CODE = "PCO"
+
+
 @dataclass
 class SyncResult:
     new: int = 0
@@ -34,6 +37,7 @@ def order_to_row(order: dict, weight_kg: float) -> dict:
         "Referentie": order.get("name", ""),
         "Gewicht": str(weight_kg),
         "Aantal colli": "1",
+        "Verpakking": PACKAGE_CODE,
     }
 
 

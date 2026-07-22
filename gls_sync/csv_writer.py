@@ -4,6 +4,7 @@ from pathlib import Path
 PENDING_COLUMNS = [
     "Naam", "Bedrijf", "Straat", "Huisnummer", "Postcode", "Plaats",
     "Land", "Telefoon", "Email", "Referentie", "Gewicht", "Aantal colli",
+    "Verpakking",
 ]
 REVIEW_COLUMNS = PENDING_COLUMNS + ["Reden"]
 
