@@ -36,6 +36,21 @@ def test_order_to_row_maps_fields():
     assert row["Verpakking"] == "PCO"
 
 
+def test_order_to_row_pulls_house_number_from_address2_when_address1_has_none():
+    order = make_order(
+        order_number="#11999",
+        name="Ingrid Op den Buijs",
+        address1="Boekweitveld",
+        address2="11",
+        zip_code="5236 WR",
+        city="Empel",
+        country_code="NL",
+    )
+    row = order_to_row(order, weight_kg=1.0)
+    assert row["Straat"] == "Boekweitveld"
+    assert row["Huisnummer"] == "11"
+
+
 class FakeClient:
     def __init__(self, orders):
         self._orders = orders

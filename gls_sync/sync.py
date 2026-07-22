@@ -20,7 +20,7 @@ class SyncResult:
 
 def order_to_row(order: dict, weight_kg: float) -> dict:
     shipping = order.get("shipping_address") or {}
-    street, house_number = split_address(shipping.get("address1", ""))
+    street, house_number = split_address(shipping.get("address1", ""), shipping.get("address2", ""))
     customer = order.get("customer") or {}
     email = order.get("contact_email") or customer.get("email", "")
     phone = shipping.get("phone") or customer.get("phone", "")
