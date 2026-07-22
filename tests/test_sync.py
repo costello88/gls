@@ -1,4 +1,5 @@
 import csv
+from gls_sync.csv_writer import DELIMITER
 from gls_sync.state import SyncState
 from gls_sync.sync import order_to_row, run_sync_tick
 from tests.fixtures.orders import make_order
@@ -6,7 +7,7 @@ from tests.fixtures.orders import make_order
 
 def _read_csv(path):
     with path.open(newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+        return list(csv.DictReader(f, delimiter=DELIMITER))
 
 
 def test_order_to_row_maps_fields():

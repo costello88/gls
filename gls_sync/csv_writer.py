@@ -8,11 +8,14 @@ PENDING_COLUMNS = [
 REVIEW_COLUMNS = PENDING_COLUMNS + ["Reden"]
 
 
+DELIMITER = ";"
+
+
 def append_row(path: Path, row: dict, columns: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     file_exists = path.exists()
     with path.open("a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=columns, restval="")
+        writer = csv.DictWriter(f, fieldnames=columns, restval="", delimiter=DELIMITER)
         if not file_exists:
             writer.writeheader()
         writer.writerow({col: row.get(col, "") for col in columns})

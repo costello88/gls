@@ -37,6 +37,12 @@ full design.
    column explaining why (e.g. bad email, bad phone, unsupported country).
 3. When you're ready to print labels: in GLS Label Lite, `Extra` → `Import
    & export` → `Import addressees/shipments` → select `pending_import.csv`.
+   The file uses `;` (semicolon) as the column separator, matching what
+   Label Lite expects — its column-mapping wizard should show each column
+   (Naam, Bedrijf, Straat, Huisnummer, Postcode, Plaats, Land, Telefoon,
+   Email, Referentie, Gewicht, Aantal colli) split out separately rather
+   than as one blob. Map each one once; Label Lite remembers the mapping
+   for future imports.
 4. Right-click the tray icon → `Mark as imported` to archive that file
    into `Documents/GLS Import/Imported/` and start a fresh one. Orders
    already archived are never re-added, even if Shopify still shows them

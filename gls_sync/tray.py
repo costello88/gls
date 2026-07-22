@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 from gls_sync.config import Settings, save_settings
+from gls_sync.csv_writer import DELIMITER
 from gls_sync.state import SyncState
 from gls_sync.sync import SyncResult, run_sync_tick
 
@@ -47,7 +48,7 @@ class TrayController:
         if not path.exists():
             return 0
         with path.open(newline="", encoding="utf-8") as f:
-            return sum(1 for _ in csv.DictReader(f))
+            return sum(1 for _ in csv.DictReader(f, delimiter=DELIMITER))
 
     def pending_count(self) -> int:
         return self._row_count(self.base_dir / "pending_import.csv")
