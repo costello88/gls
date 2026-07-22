@@ -1,0 +1,33 @@
+name: Build Windows exe
+
+on:
+  push:
+    branches:
+      - claude/shopify-gls-automation-9db5j4
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Build gls-sync.exe
+        run: pyinstaller build.spec
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gls-sync-exe
+          path: dist/gls-sync.exe

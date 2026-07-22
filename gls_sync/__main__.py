@@ -14,11 +14,13 @@ def main() -> None:
 
     client = ShopifyClient(settings.shop_domain, settings.access_token)
     state = SyncState(base_dir / "state.json")
-    controller = TrayController(client=client, state=state, base_dir=base_dir, settings=settings)
+    controller = TrayController(
+        client=client, state=state, base_dir=base_dir, settings=settings, settings_path=settings_path
+    )
 
     def _timer_loop():
         while True:
-            time.sleep(max(settings.interval_minutes, 1) * 60)
+            time.sleep(max(controller.settings.interval_minutes, 1) * 60)
             controller.sync_now()
 
     threading.Thread(target=_timer_loop, daemon=True).start()
