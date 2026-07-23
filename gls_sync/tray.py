@@ -95,10 +95,10 @@ def build_icon(controller: TrayController):
         show_dashboard(controller)
 
     menu = pystray.Menu(
-        pystray.MenuItem("Open dashboard", _open_dashboard, default=True),
-        pystray.MenuItem("Sync now", _sync_now),
-        pystray.MenuItem("Open import folder", _open_folder),
-        pystray.MenuItem("Mark as imported", _mark_imported),
-        pystray.MenuItem("Quit", lambda icon, item: icon.stop()),
+        pystray.MenuItem("Dashboard openen", _open_dashboard, default=True),
+        pystray.MenuItem("Bestellingen ophalen", _sync_now),
+        pystray.MenuItem("Map openen", _open_folder),
+        pystray.MenuItem("Als geïmporteerd markeren", _mark_imported),
+        pystray.MenuItem("Afsluiten", lambda icon, item: icon.stop()),
     )
     return pystray.Icon("gls_sync", _make_image(), "GLS Sync", menu)

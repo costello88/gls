@@ -12,6 +12,7 @@ class Settings:
     weight_kg: float = 1.0
     interval_minutes: int = 5
     run_at_startup: bool = False
+    labellite_path: str = ""
 
 
 def load_settings(path: Path) -> Settings:

@@ -25,18 +25,18 @@ def _make_controller(tmp_path, orders=None):
 def test_status_text_before_any_sync(tmp_path):
     controller = _make_controller(tmp_path)
     text = status_text(controller)
-    assert "Pending orders ready to import: 0" in text
-    assert "Orders needing review: 0" in text
-    assert "Last sync: never" in text
+    assert "Klaar om te importeren: 0" in text
+    assert "Moet gecontroleerd worden: 0" in text
+    assert "nog niet uitgevoerd" in text
 
 
 def test_status_text_after_successful_sync(tmp_path):
     controller = _make_controller(tmp_path, orders=[make_order(order_id=1)])
     controller.sync_now()
     text = status_text(controller)
-    assert "Pending orders ready to import: 1" in text
-    assert "Last sync: never" not in text
-    assert "FAILED" not in text
+    assert "Klaar om te importeren: 1" in text
+    assert "nog niet uitgevoerd" not in text
+    assert "MISLUKT" not in text
 
 
 def test_status_text_after_failed_sync(tmp_path):
@@ -50,30 +50,30 @@ def test_status_text_after_failed_sync(tmp_path):
     controller.sync_now()
 
     text = status_text(controller)
-    assert "FAILED: no network" in text
+    assert "MISLUKT: no network" in text
 
 
 def test_settings_from_form_parses_and_replaces_fields():
     current = Settings(shop_domain="old.myshopify.com", access_token="old-token", weight_kg=1.0, interval_minutes=5)
     updated = settings_from_form(
         current,
-        shop_domain=" new.myshopify.com ",
-        access_token=" new-token ",
         weight_kg="2.5",
         interval_minutes="10",
         run_at_startup=True,
+        labellite_path=r" C:\GLS\LabelLite.exe ",
     )
-    assert updated.shop_domain == "new.myshopify.com"
-    assert updated.access_token == "new-token"
+    assert updated.shop_domain == "old.myshopify.com"
+    assert updated.access_token == "old-token"
     assert updated.weight_kg == 2.5
     assert updated.interval_minutes == 10
     assert updated.run_at_startup is True
+    assert updated.labellite_path == r"C:\GLS\LabelLite.exe"
 
 
 def test_settings_from_form_rejects_non_numeric_weight():
     current = Settings()
     with pytest.raises(ValueError):
-        settings_from_form(current, "x.myshopify.com", "t", "not-a-number", "5", False)
+        settings_from_form(current, "not-a-number", "5", False, "")
 
 
 def test_update_settings_persists_and_swaps_client(tmp_path):

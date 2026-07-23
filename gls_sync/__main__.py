@@ -1,9 +1,14 @@
+import atexit
+import os
+import subprocess
+import sys
 import threading
 import time
 import traceback
 from datetime import datetime
 
 from gls_sync.config import DEFAULT_BASE_DIR, load_settings
+from gls_sync.launcher import lock_path_for, remove_lock, start_with_labellite, write_lock
 from gls_sync.shopify_client import ShopifyClient
 from gls_sync.state import SyncState
 from gls_sync.tray import TrayController, build_icon
@@ -13,6 +18,10 @@ def main() -> None:
     base_dir = DEFAULT_BASE_DIR
     settings_path = base_dir / "settings.json"
     settings = load_settings(settings_path)
+
+    lock_path = lock_path_for(base_dir)
+    write_lock(lock_path, os.getpid())
+    atexit.register(remove_lock, lock_path)
 
     client = ShopifyClient(settings.shop_domain, settings.access_token)
     state = SyncState(base_dir / "state.json")
@@ -31,6 +40,18 @@ def main() -> None:
     icon.run()
 
 
+def _run_start_with_labellite() -> None:
+    base_dir = DEFAULT_BASE_DIR
+    settings = load_settings(base_dir / "settings.json")
+    exe_path = sys.executable if getattr(sys, "frozen", False) else __file__
+    start_with_labellite(
+        gls_sync_exe=exe_path,
+        labellite_exe=settings.labellite_path,
+        lock_path=lock_path_for(base_dir),
+        popen=subprocess.Popen,
+    )
+
+
 def _log_crash(base_dir, exc: BaseException) -> None:
     base_dir.mkdir(parents=True, exist_ok=True)
     log_path = base_dir / "error.log"
@@ -45,10 +66,10 @@ def _log_crash(base_dir, exc: BaseException) -> None:
         root = tk.Tk()
         root.withdraw()
         messagebox.showerror(
-            "GLS Sync failed to start",
-            f"GLS Sync ran into a problem and could not start.\n\n"
-            f"Details were saved to:\n{log_path}\n\n"
-            f"Error: {exc}",
+            "GLS Sync kon niet starten",
+            f"Er is iets misgegaan bij het starten van GLS Sync.\n\n"
+            f"Details zijn opgeslagen in:\n{log_path}\n\n"
+            f"Foutmelding: {exc}",
         )
         root.destroy()
     except Exception:
@@ -57,6 +78,9 @@ def _log_crash(base_dir, exc: BaseException) -> None:
 
 if __name__ == "__main__":
     try:
-        main()
+        if "--start-labellite" in sys.argv:
+            _run_start_with_labellite()
+        else:
+            main()
     except Exception as exc:
         _log_crash(DEFAULT_BASE_DIR, exc)
