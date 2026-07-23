@@ -7,8 +7,9 @@ import time
 import traceback
 from datetime import datetime
 
-from gls_sync.config import DEFAULT_BASE_DIR, load_settings
+from gls_sync.config import DEFAULT_BASE_DIR, load_or_bootstrap_settings, load_settings
 from gls_sync.launcher import lock_path_for, remove_lock, start_with_labellite, write_lock
+from gls_sync.resources import bundled_default_settings_path
 from gls_sync.shopify_client import ShopifyClient
 from gls_sync.state import SyncState
 from gls_sync.tray import TrayController, build_icon
@@ -17,7 +18,7 @@ from gls_sync.tray import TrayController, build_icon
 def main() -> None:
     base_dir = DEFAULT_BASE_DIR
     settings_path = base_dir / "settings.json"
-    settings = load_settings(settings_path)
+    settings = load_or_bootstrap_settings(settings_path, bundled_default_settings_path())
 
     lock_path = lock_path_for(base_dir)
     write_lock(lock_path, os.getpid())

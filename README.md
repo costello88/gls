@@ -10,8 +10,28 @@ full design.
 
 ## One-time Shopify setup
 
-Shopify credentials live only in the `settings.json` file, not in the
-dashboard UI (so they're never accidentally edited or shown on screen).
+Shopify credentials are never shown or editable in the dashboard UI.
+There are two ways they reach the app:
+
+### Baked into every build (used for distributing to coworkers)
+
+Add two repository secrets (Settings → Secrets and variables → Actions →
+New repository secret): `SHOPIFY_SHOP_DOMAIN` and `SHOPIFY_ACCESS_TOKEN`.
+Every time `build-exe.yml` runs, it injects these into
+`gls_sync/default_settings.json` before packaging, so the resulting
+`gls-sync.exe` works immediately for anyone who downloads it from that
+build's Artifacts — no setup step at all. On first run, each machine
+copies those baked-in values into its own local
+`Documents/GLS Import/settings.json`, which you can still edit per-machine
+afterward (e.g. a different `weight_kg`) without needing to rebuild.
+
+**Security note:** anyone who has the `.exe` can extract the token from
+it (it's not real protection against a determined person), and anyone who
+can trigger a build in this repo can see/use it. Only distribute the
+`.exe` to people you'd trust with direct API access to this store's
+orders, and rotate the token in Shopify if that ever changes.
+
+### Manual, per-machine (if you'd rather not bake in real credentials)
 
 1. In Shopify admin: Settings → Apps and sales channels → Develop apps →
    Create an app.

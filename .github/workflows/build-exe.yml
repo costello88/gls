@@ -24,6 +24,25 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
 
+      - name: Inject Shopify credentials into bundled defaults
+        shell: bash
+        env:
+          SHOPIFY_SHOP_DOMAIN: ${{ secrets.SHOPIFY_SHOP_DOMAIN }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: |
+          python - <<'EOF'
+          import json
+          import os
+
+          path = "gls_sync/default_settings.json"
+          with open(path) as f:
+              data = json.load(f)
+          data["shop_domain"] = os.environ.get("SHOPIFY_SHOP_DOMAIN", "")
+          data["access_token"] = os.environ.get("SHOPIFY_ACCESS_TOKEN", "")
+          with open(path, "w") as f:
+              json.dump(data, f, indent=2)
+          EOF
+
       - name: Build gls-sync.exe
         run: pyinstaller build.spec
 
