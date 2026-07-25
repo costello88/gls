@@ -22,6 +22,8 @@ export interface RawWooCommerceOrder {
 
 type WooCommerceStoreConfig = Extract<StoreConfig, { type: "WOOCOMMERCE" }>;
 
+const WOOCOMMERCE_ORDERS_AFTER = "2026-07-24T00:00:00";
+
 export async function fetchWooCommerceOrders(
   store: WooCommerceStoreConfig,
 ): Promise<RawWooCommerceOrder[]> {
@@ -32,7 +34,7 @@ export async function fetchWooCommerceOrders(
   let page = 1;
 
   while (true) {
-    const url = `${store.siteUrl}/wp-json/wc/v3/orders?status=processing&per_page=100&page=${page}`;
+    const url = `${store.siteUrl}/wp-json/wc/v3/orders?status=processing&per_page=100&page=${page}&after=${WOOCOMMERCE_ORDERS_AFTER}`;
     const response = await fetch(url, {
       headers: { Authorization: `Basic ${auth}` },
     });

@@ -31,7 +31,7 @@ describe("fetchWooCommerceOrders", () => {
     expect(orders).toEqual([order]);
     const [url, options] = mockFetch.mock.calls[0];
     expect(url).toBe(
-      "https://example.com/wp-json/wc/v3/orders?status=processing&per_page=100&page=1",
+      "https://example.com/wp-json/wc/v3/orders?status=processing&per_page=100&page=1&after=2026-07-24T00:00:00",
     );
     const expectedAuth = `Basic ${Buffer.from("ck_test:cs_test").toString("base64")}`;
     expect((options as RequestInit).headers).toEqual({ Authorization: expectedAuth });
