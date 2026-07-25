@@ -2099,6 +2099,8 @@ import { listStores } from "../../lib/dashboard/stores";
 import { PrismaStoreRepository } from "../../lib/repositories/storeRepository";
 import { StoreForm } from "./StoreForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
   const repository = new PrismaStoreRepository();
   const stores = await listStores(repository);
@@ -2227,7 +2229,7 @@ Expected: PASS (every test across the whole project, unaffected by this page-onl
 - [ ] **Step 6: Verify the build**
 
 Run: `cd /home/user/gls/web && npm run build`
-Expected: builds successfully, including the new/modified pages. If Next.js reports an error about `searchParams`/`params` shapes on pages (these also became async-`Promise` in Next 15+, matching route handlers), adjust the page files' signatures to match what the build error reports — the Client Components (`SyncButton`, `PrintButton`, `ReviewForm`, `StoreForm`) are unaffected either way.
+Expected: builds successfully, including the new/modified pages. If Next.js reports an error about `searchParams`/`params` shapes on pages (these also became async-`Promise` in Next 15+, matching route handlers), adjust the page files' signatures to match what the build error reports — the Client Components (`SyncButton`, `PrintButton`, `ReviewForm`, `StoreForm`) are unaffected either way. `/instellingen` has no dynamic `params`/`searchParams` input, so Next.js tries to statically prerender it at build time and calls Prisma with no `DATABASE_URL` available in this sandbox, failing the build — `export const dynamic = "force-dynamic";` in `web/app/instellingen/page.tsx` (already included above) forces it to render on request instead, which is what it needs to do in production anyway since it reads live store data.
 
 - [ ] **Step 7: Commit**
 
