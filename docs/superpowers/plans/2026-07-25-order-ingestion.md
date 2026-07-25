@@ -752,9 +752,10 @@ describe("fetchWooCommerceOrders", () => {
 
   it("fetches a single page with status=processing and a Basic auth header", async () => {
     const order = { id: 2001, number: "2001" };
-    const mockFetch = vi.fn().mockResolvedValue({
-      json: async () => [order],
-    });
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce({ json: async () => [order] })
+      .mockResolvedValueOnce({ json: async () => [] });
     global.fetch = mockFetch as unknown as typeof fetch;
 
     const orders = await fetchWooCommerceOrders(store);
