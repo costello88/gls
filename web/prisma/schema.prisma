@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StoreType {
+  SHOPIFY
+  WOOCOMMERCE
+}
+
+enum OrderStatus {
+  PENDING
+  NEEDS_REVIEW
+  READY
+  PRINTED
+  ERROR
+}
+
+model Store {
+  id                 String    @id @default(cuid())
+  type               StoreType
+  name               String
+  automationEnabled  Boolean   @default(false)
+  customerNo         String
+  defaultWeightKg    Float     @default(1.0)
+
+  shopDomain          String?
+  shopifyAccessToken  String?
+
+  siteUrl             String?
+  wooConsumerKey      String?
+  wooConsumerSecret   String?
+
+  orders              Order[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  store          Store       @relation(fields: [storeId], references: [id])
+  storeId        String
+  sourceOrderId  String
+  orderNumber    String
+  name           String
+  street         String
+  houseNo        String
+  zipCode        String
+  city           String
+  countryCode    String
+  phone          String
+  email          String
+  weightKg       Float
+  customerNo     String
+  status         OrderStatus @default(PENDING)
+  reviewReason   String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([storeId, sourceOrderId])
+}
