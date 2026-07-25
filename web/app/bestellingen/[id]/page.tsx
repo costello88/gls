@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PrismaOrderRepository } from "../../../lib/repositories/orderRepository";
+import { AppShell } from "../../components/AppShell";
 import { ReviewForm } from "./ReviewForm";
 
 export default async function ReviewPage({
@@ -16,10 +17,12 @@ export default async function ReviewPage({
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: "40px auto", fontFamily: "sans-serif" }}>
-      <h1>Bestelling controleren</h1>
-      <p style={{ color: "red" }}>{order.reviewReason}</p>
-      <ReviewForm order={order} />
-    </main>
+    <AppShell>
+      <div className="mx-auto max-w-lg rounded-lg bg-white p-6 shadow-sm">
+        <h1 className="mb-2 text-xl font-semibold text-slate-900">Bestelling controleren</h1>
+        <p className="mb-6 text-sm text-red-600">{order.reviewReason}</p>
+        <ReviewForm order={order} />
+      </div>
+    </AppShell>
   );
 }

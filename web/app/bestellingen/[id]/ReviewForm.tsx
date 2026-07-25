@@ -41,15 +41,24 @@ export function ReviewForm({ order }: { order: OrderRecord }) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-4">
       {(Object.keys(fields) as (keyof typeof fields)[]).map((key) => (
-        <label key={key} style={{ display: "block", marginBottom: 8 }}>
-          {key}
-          <input value={fields[key]} onChange={set(key)} style={{ display: "block", width: "100%" }} />
+        <label key={key} className="block">
+          <span className="mb-1 block text-sm font-medium text-slate-700">{key}</span>
+          <input
+            value={fields[key]}
+            onChange={set(key)}
+            className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+          />
         </label>
       ))}
-      <button type="submit">Opslaan</button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button
+        type="submit"
+        className="rounded bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500"
+      >
+        Opslaan
+      </button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </form>
   );
 }
