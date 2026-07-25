@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { StoreInput, StoreRecord, StoreRepository } from "../../../../lib/dashboard/types";
-import { handleCreateStore, handleListStores, handleUpdateStore } from "../shared";
+import { handleCreateStore, handleDeleteStore, handleListStores, handleUpdateStore } from "../shared";
 
 class FakeStoreRepository implements StoreRepository {
   private stores = new Map<string, StoreRecord>();
@@ -39,6 +39,10 @@ class FakeStoreRepository implements StoreRepository {
     const updated = { ...existing, ...edits };
     this.stores.set(id, updated);
     return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    this.stores.delete(id);
   }
 }
 
@@ -108,5 +112,19 @@ describe("handleUpdateStore", () => {
 
     expect(response.status).toBe(200);
     expect(body.store.automationEnabled).toBe(true);
+  });
+});
+
+describe("handleDeleteStore", () => {
+  it("removes the store and returns ok", async () => {
+    const repo = new FakeStoreRepository();
+    const created = await repo.create(shopifyInput);
+
+    const response = await handleDeleteStore(repo, created.id);
+    const body = (await response.json()) as { ok: boolean };
+
+    expect(response.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(await repo.list()).toHaveLength(0);
   });
 });

@@ -1,6 +1,7 @@
 import { listStores } from "../../lib/dashboard/stores";
 import { PrismaStoreRepository } from "../../lib/repositories/storeRepository";
 import { AppShell } from "../components/AppShell";
+import { DeleteStoreButton } from "./DeleteStoreButton";
 import { StoreForm } from "./StoreForm";
 
 export const dynamic = "force-dynamic";
@@ -24,13 +25,16 @@ export default async function SettingsPage() {
               <span className="font-medium text-slate-900">{store.name}</span>
               <span className="ml-2 text-sm text-slate-500">({store.type})</span>
             </div>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                store.automationEnabled ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              automatisch: {store.automationEnabled ? "aan" : "uit"}
-            </span>
+            <div className="flex items-center gap-4">
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  store.automationEnabled ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                automatisch: {store.automationEnabled ? "aan" : "uit"}
+              </span>
+              <DeleteStoreButton storeId={store.id} storeName={store.name} />
+            </div>
           </li>
         ))}
         {stores.length === 0 && (

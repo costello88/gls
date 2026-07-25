@@ -13,6 +13,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/" className="text-sm font-medium text-slate-200 hover:text-white">
               Bestellingen
             </Link>
+            <Link href="/automatisering" className="text-sm font-medium text-slate-200 hover:text-white">
+              Automatisering
+            </Link>
             <Link href="/instellingen" className="text-sm font-medium text-slate-200 hover:text-white">
               Instellingen
             </Link>

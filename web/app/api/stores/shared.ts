@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createStore, listStores, updateStore } from "../../../lib/dashboard/stores";
+import { createStore, deleteStore, listStores, updateStore } from "../../../lib/dashboard/stores";
 import type { StoreInput, StoreRepository } from "../../../lib/dashboard/types";
 
 export async function handleListStores(repo: StoreRepository): Promise<Response> {
@@ -29,4 +29,9 @@ export async function handleUpdateStore(
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 400 });
   }
+}
+
+export async function handleDeleteStore(repo: StoreRepository, id: string): Promise<Response> {
+  await deleteStore(repo, id);
+  return NextResponse.json({ ok: true });
 }

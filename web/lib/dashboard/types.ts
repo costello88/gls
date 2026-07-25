@@ -71,4 +71,5 @@ export interface StoreRepository {
   get(id: string): Promise<StoreRecord | null>;
   create(input: StoreInput): Promise<StoreRecord>;
   update(id: string, edits: Partial<StoreInput>): Promise<StoreRecord>;
+  delete(id: string): Promise<void>;
 }

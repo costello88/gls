@@ -37,4 +37,8 @@ export class PrismaStoreRepository implements StoreRepository {
     const store = await prisma.store.update({ where: { id }, data: edits });
     return toStoreRecord(store);
   }
+
+  async delete(id: string): Promise<void> {
+    await prisma.store.delete({ where: { id } });
+  }
 }

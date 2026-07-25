@@ -28,6 +28,10 @@ class FakeStoreRepository implements StoreRepository {
   async update(): Promise<StoreRecord> {
     throw new Error("not used");
   }
+
+  async delete(): Promise<void> {
+    throw new Error("not used");
+  }
 }
 
 const store1: StoreRecord = {

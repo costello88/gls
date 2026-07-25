@@ -63,3 +63,7 @@ export async function updateStore(
   }
   return repo.update(id, edits);
 }
+
+export async function deleteStore(repo: StoreRepository, id: string): Promise<void> {
+  await repo.delete(id);
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createStore, listStores, updateStore } from "../stores";
+import { createStore, deleteStore, listStores, updateStore } from "../stores";
 import type { StoreInput, StoreRecord, StoreRepository } from "../types";
 
 class FakeStoreRepository implements StoreRepository {
@@ -39,6 +39,10 @@ class FakeStoreRepository implements StoreRepository {
     const updated = { ...existing, ...edits };
     this.stores.set(id, updated);
     return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    this.stores.delete(id);
   }
 }
 
@@ -96,5 +100,16 @@ describe("updateStore", () => {
     await expect(updateStore(repo, created.id, { shopifyAccessToken: "" })).rejects.toThrow(
       "access token",
     );
+  });
+});
+
+describe("deleteStore", () => {
+  it("removes the store", async () => {
+    const repo = new FakeStoreRepository();
+    const created = await createStore(repo, shopifyInput);
+
+    await deleteStore(repo, created.id);
+
+    expect(await listStores(repo)).toHaveLength(0);
   });
 });
