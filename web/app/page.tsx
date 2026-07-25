@@ -2,6 +2,8 @@ import Link from "next/link";
 import { listOrders } from "../lib/dashboard/orders";
 import { PrismaOrderRepository } from "../lib/repositories/orderRepository";
 import type { OrderRecordStatus } from "../lib/dashboard/types";
+import { AppShell } from "./components/AppShell";
+import { StatusBadge } from "./components/StatusBadge";
 import { SyncButton } from "./SyncButton";
 import { PrintButton } from "./PrintButton";
 
@@ -22,55 +24,71 @@ export default async function DashboardPage({
   const orders = await listOrders(repository, { status: activeStatus });
 
   return (
-    <main style={{ maxWidth: 960, margin: "40px auto", fontFamily: "sans-serif" }}>
-      <h1>GLS Sync</h1>
-      <nav style={{ marginBottom: 16 }}>
-        {TABS.map((tab) => (
-          <Link
-            key={tab.status}
-            href={`/?status=${tab.status}`}
-            style={{
-              marginRight: 12,
-              fontWeight: tab.status === activeStatus ? "bold" : "normal",
-            }}
-          >
-            {tab.label}
-          </Link>
-        ))}
-        <Link href="/instellingen" style={{ float: "right" }}>
-          Instellingen
-        </Link>
-      </nav>
-      <SyncButton />
-      <table style={{ width: "100%", marginTop: 16, borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th style={{ textAlign: "left" }}>Naam</th>
-            <th style={{ textAlign: "left" }}>Adres</th>
-            <th style={{ textAlign: "left" }}>Land</th>
-            <th style={{ textAlign: "left" }}>Status</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((order) => (
-            <tr key={order.id}>
-              <td>{order.name}</td>
-              <td>
-                {order.street} {order.houseNo}, {order.zipCode} {order.city}
-              </td>
-              <td>{order.countryCode}</td>
-              <td>{order.status}</td>
-              <td>
-                {order.status === "NEEDS_REVIEW" && (
-                  <Link href={`/bestellingen/${order.id}`}>Bekijken</Link>
-                )}
-                {order.status === "PENDING" && <PrintButton orderId={order.id} />}
-              </td>
-            </tr>
+    <AppShell>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex gap-2">
+          {TABS.map((tab) => (
+            <Link
+              key={tab.status}
+              href={`/?status=${tab.status}`}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                tab.status === activeStatus
+                  ? "bg-yellow-400 text-black"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {tab.label}
+            </Link>
           ))}
-        </tbody>
-      </table>
-    </main>
+        </div>
+        <SyncButton />
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3">Naam</th>
+              <th className="px-4 py-3">Adres</th>
+              <th className="px-4 py-3">Land</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {orders.map((order) => (
+              <tr key={order.id} className="even:bg-slate-50">
+                <td className="px-4 py-3 font-medium text-slate-900">{order.name}</td>
+                <td className="px-4 py-3 text-slate-600">
+                  {order.street} {order.houseNo}, {order.zipCode} {order.city}
+                </td>
+                <td className="px-4 py-3 text-slate-600">{order.countryCode}</td>
+                <td className="px-4 py-3">
+                  <StatusBadge status={order.status} />
+                </td>
+                <td className="px-4 py-3 text-right">
+                  {order.status === "NEEDS_REVIEW" && (
+                    <Link
+                      href={`/bestellingen/${order.id}`}
+                      className="text-sm font-medium text-blue-600 hover:underline"
+                    >
+                      Bekijken
+                    </Link>
+                  )}
+                  {order.status === "PENDING" && <PrintButton orderId={order.id} />}
+                </td>
+              </tr>
+            ))}
+            {orders.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                  Geen bestellingen in deze categorie.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </AppShell>
   );
 }
