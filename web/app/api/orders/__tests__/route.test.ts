@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { GlsApiError } from "../../../../lib/gls/errors";
 import type { DashboardOrderRepository, OrderFilter, OrderRecord } from "../../../../lib/dashboard/types";
-import { handleListOrders, handlePrintOrder, handleReviewOrder } from "../shared";
+import { handleClearOrders, handleListOrders, handlePrintOrder, handleReviewOrder } from "../shared";
 
 function makeOrderRecord(overrides: Partial<OrderRecord> = {}): OrderRecord {
   return {
@@ -73,7 +73,7 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
   }
 
   async deleteAll(): Promise<void> {
-    throw new Error("not used");
+    this.orders.clear();
   }
 }
 
@@ -144,5 +144,19 @@ describe("handlePrintOrder", () => {
 
     expect(response.status).toBe(502);
     expect(body.error).toBe("Ongeldige postcode");
+  });
+});
+
+describe("handleClearOrders", () => {
+  it("deletes every order and returns ok", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(makeOrderRecord({ id: "1" }));
+
+    const response = await handleClearOrders(repo);
+    const body = (await response.json()) as { ok: boolean };
+
+    expect(response.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(await repo.list({})).toHaveLength(0);
   });
 });

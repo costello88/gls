@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { GlsApiError } from "../../gls/errors";
-import { listOrders, printOrder, reviewOrder } from "../orders";
+import { clearOrders, listOrders, printOrder, reviewOrder } from "../orders";
 import type {
   DashboardOrderRepository,
   OrderEdits,
@@ -78,7 +78,7 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
   }
 
   async deleteAll(): Promise<void> {
-    throw new Error("not used in these tests");
+    this.orders.clear();
   }
 }
 
@@ -165,5 +165,17 @@ describe("printOrder", () => {
     const updated = await repo.get("1");
     expect(updated?.status).toBe("ERROR");
     expect(updated?.reviewReason).toBe("Ongeldige postcode");
+  });
+});
+
+describe("clearOrders", () => {
+  it("deletes every order", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(makeOrderRecord({ id: "1", status: "PENDING" }));
+    repo.seed(makeOrderRecord({ id: "2", status: "PRINTED" }));
+
+    await clearOrders(repo);
+
+    expect(await listOrders(repo, {})).toHaveLength(0);
   });
 });

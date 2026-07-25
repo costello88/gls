@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { GlsApiError } from "../../../lib/gls/errors";
-import { listOrders, printOrder, reviewOrder, type CreateLabelFn } from "../../../lib/dashboard/orders";
+import { clearOrders, listOrders, printOrder, reviewOrder, type CreateLabelFn } from "../../../lib/dashboard/orders";
 import type { DashboardOrderRepository, OrderEdits, OrderFilter } from "../../../lib/dashboard/types";
 
 export async function handleListOrders(
@@ -37,4 +37,9 @@ export async function handlePrintOrder(
     }
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
+}
+
+export async function handleClearOrders(repo: DashboardOrderRepository): Promise<Response> {
+  await clearOrders(repo);
+  return NextResponse.json({ ok: true });
 }

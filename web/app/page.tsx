@@ -6,6 +6,7 @@ import { AppShell } from "./components/AppShell";
 import { StatusBadge } from "./components/StatusBadge";
 import { SyncButton } from "./SyncButton";
 import { PrintButton } from "./PrintButton";
+import { ClearOrdersButton } from "./ClearOrdersButton";
 
 const TABS: { label: string; status: OrderRecordStatus }[] = [
   { label: "Klaar om te printen", status: "PENDING" },
@@ -42,7 +43,10 @@ export default async function DashboardPage({
             </Link>
           ))}
         </div>
-        <SyncButton />
+        <div className="flex items-center gap-2">
+          <SyncButton />
+          <ClearOrdersButton />
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">

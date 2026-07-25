@@ -74,3 +74,7 @@ export async function printOrder(
     throw err;
   }
 }
+
+export async function clearOrders(repo: DashboardOrderRepository): Promise<void> {
+  await repo.deleteAll();
+}
