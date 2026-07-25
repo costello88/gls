@@ -32,7 +32,7 @@ export async function fetchShopifyOrders(store: ShopifyStoreConfig): Promise<Raw
 
   const orders: RawShopifyOrder[] = [];
   while (url) {
-    const requestUrl = params ? `${url}?${params.toString()}` : url;
+    const requestUrl: string = params ? `${url}?${params.toString()}` : url;
     const response = await fetch(requestUrl, {
       headers: { "X-Shopify-Access-Token": store.shopifyAccessToken },
     });
