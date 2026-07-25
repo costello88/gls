@@ -11,6 +11,7 @@ const TABS: { label: string; status: OrderRecordStatus }[] = [
   { label: "Klaar om te printen", status: "PENDING" },
   { label: "Moet gecontroleerd worden", status: "NEEDS_REVIEW" },
   { label: "Geprint", status: "PRINTED" },
+  { label: "Fout", status: "ERROR" },
 ];
 
 export default async function DashboardPage({
@@ -75,7 +76,9 @@ export default async function DashboardPage({
                       Bekijken
                     </Link>
                   )}
-                  {order.status === "PENDING" && <PrintButton orderId={order.id} />}
+                  {(order.status === "PENDING" || order.status === "ERROR") && (
+                    <PrintButton orderId={order.id} />
+                  )}
                 </td>
               </tr>
             ))}
