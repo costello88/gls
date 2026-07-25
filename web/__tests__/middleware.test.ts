@@ -8,31 +8,31 @@ describe("middleware", () => {
     process.env.SESSION_SECRET = "test-secret";
   });
 
-  it("redirects to /login when no session cookie is present", () => {
+  it("redirects to /login when no session cookie is present", async () => {
     const request = new NextRequest("https://example.com/");
-    const response = middleware(request);
+    const response = await middleware(request);
     expect(response.headers.get("location")).toContain("/login");
   });
 
-  it("allows /login through without a cookie", () => {
+  it("allows /login through without a cookie", async () => {
     const request = new NextRequest("https://example.com/login");
-    const response = middleware(request);
+    const response = await middleware(request);
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("allows the request through with a valid session cookie", () => {
+  it("allows the request through with a valid session cookie", async () => {
     const request = new NextRequest("https://example.com/", {
-      headers: { cookie: `${COOKIE_NAME}=${createSessionCookieValue()}` },
+      headers: { cookie: `${COOKIE_NAME}=${await createSessionCookieValue()}` },
     });
-    const response = middleware(request);
+    const response = await middleware(request);
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("redirects when the session cookie is invalid", () => {
+  it("redirects when the session cookie is invalid", async () => {
     const request = new NextRequest("https://example.com/", {
       headers: { cookie: `${COOKIE_NAME}=garbage` },
     });
-    const response = middleware(request);
+    const response = await middleware(request);
     expect(response.headers.get("location")).toContain("/login");
   });
 });

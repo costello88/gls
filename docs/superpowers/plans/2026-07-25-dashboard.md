@@ -95,7 +95,7 @@ web/
 
 **Interfaces:**
 - Consumes: nothing from other tasks.
-- Produces: `COOKIE_NAME`, `createSessionCookieValue(): string`, `isValidSessionCookie(value: string | undefined): boolean` from `web/lib/session.ts` — used by every later task that needs auth (none of the later tasks in this plan directly do, but this gates all routes via `middleware.ts`).
+- Produces: `COOKIE_NAME`, `createSessionCookieValue(): Promise<string>`, `isValidSessionCookie(value: string | undefined): Promise<boolean>` from `web/lib/session.ts` (both async, since the HMAC signing uses the Web Crypto API so it also works in the Edge Runtime `middleware.ts` runs under) — used by every later task that needs auth (none of the later tasks in this plan directly do, but this gates all routes via `middleware.ts`).
 
 - [ ] **Step 1: Write the failing session tests**
 
@@ -113,23 +113,23 @@ describe("session", () => {
     expect(COOKIE_NAME).toBe("gls_session");
   });
 
-  it("validates a freshly created session cookie", () => {
-    const value = createSessionCookieValue();
-    expect(isValidSessionCookie(value)).toBe(true);
+  it("validates a freshly created session cookie", async () => {
+    const value = await createSessionCookieValue();
+    expect(await isValidSessionCookie(value)).toBe(true);
   });
 
-  it("rejects an undefined cookie", () => {
-    expect(isValidSessionCookie(undefined)).toBe(false);
+  it("rejects an undefined cookie", async () => {
+    expect(await isValidSessionCookie(undefined)).toBe(false);
   });
 
-  it("rejects a garbage cookie", () => {
-    expect(isValidSessionCookie("not-a-real-cookie")).toBe(false);
+  it("rejects a garbage cookie", async () => {
+    expect(await isValidSessionCookie("not-a-real-cookie")).toBe(false);
   });
 
-  it("rejects a tampered cookie", () => {
-    const value = createSessionCookieValue();
+  it("rejects a tampered cookie", async () => {
+    const value = await createSessionCookieValue();
     const tampered = value.slice(0, -1) + (value.endsWith("a") ? "b" : "a");
-    expect(isValidSessionCookie(tampered)).toBe(false);
+    expect(await isValidSessionCookie(tampered)).toBe(false);
   });
 });
 ```
@@ -143,8 +143,6 @@ Expected: FAIL with "Cannot find module '../session'"
 
 `web/lib/session.ts`:
 ```typescript
-import crypto from "crypto";
-
 export const COOKIE_NAME = "gls_session";
 const SESSION_VALUE = "authenticated";
 
@@ -156,16 +154,27 @@ function getSecret(): string {
   return secret;
 }
 
-function sign(value: string): string {
-  const hmac = crypto.createHmac("sha256", getSecret()).update(value).digest("hex");
-  return `${value}.${hmac}`;
+function toHex(buffer: ArrayBuffer): string {
+  return [...new Uint8Array(buffer)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export function createSessionCookieValue(): string {
+async function sign(value: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(getSecret()),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+  return `${value}.${toHex(signatureBuffer)}`;
+}
+
+export async function createSessionCookieValue(): Promise<string> {
   return sign(SESSION_VALUE);
 }
 
-export function isValidSessionCookie(value: string | undefined): boolean {
+export async function isValidSessionCookie(value: string | undefined): Promise<boolean> {
   if (!value) {
     return false;
   }
@@ -177,11 +186,16 @@ export function isValidSessionCookie(value: string | undefined): boolean {
   if (payload !== SESSION_VALUE) {
     return false;
   }
-  const expected = sign(payload).split(".")[1];
+  const expectedSigned = await sign(payload);
+  const expected = expectedSigned.split(".")[1];
   if (signature.length !== expected.length) {
     return false;
   }
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  let mismatch = 0;
+  for (let i = 0; i < signature.length; i++) {
+    mismatch |= signature.charCodeAt(i) ^ expected.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
 ```
 
@@ -204,31 +218,31 @@ describe("middleware", () => {
     process.env.SESSION_SECRET = "test-secret";
   });
 
-  it("redirects to /login when no session cookie is present", () => {
+  it("redirects to /login when no session cookie is present", async () => {
     const request = new NextRequest("https://example.com/");
-    const response = middleware(request);
+    const response = await middleware(request);
     expect(response.headers.get("location")).toContain("/login");
   });
 
-  it("allows /login through without a cookie", () => {
+  it("allows /login through without a cookie", async () => {
     const request = new NextRequest("https://example.com/login");
-    const response = middleware(request);
+    const response = await middleware(request);
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("allows the request through with a valid session cookie", () => {
+  it("allows the request through with a valid session cookie", async () => {
     const request = new NextRequest("https://example.com/", {
-      headers: { cookie: `${COOKIE_NAME}=${createSessionCookieValue()}` },
+      headers: { cookie: `${COOKIE_NAME}=${await createSessionCookieValue()}` },
     });
-    const response = middleware(request);
+    const response = await middleware(request);
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("redirects when the session cookie is invalid", () => {
+  it("redirects when the session cookie is invalid", async () => {
     const request = new NextRequest("https://example.com/", {
       headers: { cookie: `${COOKIE_NAME}=garbage` },
     });
-    const response = middleware(request);
+    const response = await middleware(request);
     expect(response.headers.get("location")).toContain("/login");
   });
 });
@@ -246,14 +260,14 @@ Expected: FAIL with "Cannot find module '../middleware'"
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_NAME, isValidSessionCookie } from "./lib/session";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (pathname.startsWith("/login") || pathname.startsWith("/api/auth/login")) {
     return NextResponse.next();
   }
 
   const cookie = request.cookies.get(COOKIE_NAME)?.value;
-  if (!isValidSessionCookie(cookie)) {
+  if (!(await isValidSessionCookie(cookie))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -317,7 +331,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(COOKIE_NAME, createSessionCookieValue(), {
+  response.cookies.set(COOKIE_NAME, await createSessionCookieValue(), {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
@@ -459,7 +473,7 @@ import type { OrderRecordInput, OrderRepository } from "../ingest/types";
 
 export type OrderRecordStatus = "PENDING" | "NEEDS_REVIEW" | "READY" | "PRINTED" | "ERROR";
 
-export interface OrderRecord extends OrderRecordInput {
+export interface OrderRecord extends Omit<OrderRecordInput, "status"> {
   id: string;
   status: OrderRecordStatus;
   label: string | null;

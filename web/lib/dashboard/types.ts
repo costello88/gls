@@ -2,7 +2,7 @@ import type { OrderRecordInput, OrderRepository } from "../ingest/types";
 
 export type OrderRecordStatus = "PENDING" | "NEEDS_REVIEW" | "READY" | "PRINTED" | "ERROR";
 
-export interface OrderRecord extends OrderRecordInput {
+export interface OrderRecord extends Omit<OrderRecordInput, "status"> {
   id: string;
   status: OrderRecordStatus;
   label: string | null;

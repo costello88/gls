@@ -9,7 +9,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(COOKIE_NAME, createSessionCookieValue(), {
+  response.cookies.set(COOKIE_NAME, await createSessionCookieValue(), {
     httpOnly: true,
     secure: true,
     sameSite: "lax",

@@ -10,22 +10,22 @@ describe("session", () => {
     expect(COOKIE_NAME).toBe("gls_session");
   });
 
-  it("validates a freshly created session cookie", () => {
-    const value = createSessionCookieValue();
-    expect(isValidSessionCookie(value)).toBe(true);
+  it("validates a freshly created session cookie", async () => {
+    const value = await createSessionCookieValue();
+    expect(await isValidSessionCookie(value)).toBe(true);
   });
 
-  it("rejects an undefined cookie", () => {
-    expect(isValidSessionCookie(undefined)).toBe(false);
+  it("rejects an undefined cookie", async () => {
+    expect(await isValidSessionCookie(undefined)).toBe(false);
   });
 
-  it("rejects a garbage cookie", () => {
-    expect(isValidSessionCookie("not-a-real-cookie")).toBe(false);
+  it("rejects a garbage cookie", async () => {
+    expect(await isValidSessionCookie("not-a-real-cookie")).toBe(false);
   });
 
-  it("rejects a tampered cookie", () => {
-    const value = createSessionCookieValue();
+  it("rejects a tampered cookie", async () => {
+    const value = await createSessionCookieValue();
     const tampered = value.slice(0, -1) + (value.endsWith("a") ? "b" : "a");
-    expect(isValidSessionCookie(tampered)).toBe(false);
+    expect(await isValidSessionCookie(tampered)).toBe(false);
   });
 });

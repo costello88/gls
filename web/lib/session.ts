@@ -1,5 +1,3 @@
-import crypto from "crypto";
-
 export const COOKIE_NAME = "gls_session";
 const SESSION_VALUE = "authenticated";
 
@@ -11,16 +9,27 @@ function getSecret(): string {
   return secret;
 }
 
-function sign(value: string): string {
-  const hmac = crypto.createHmac("sha256", getSecret()).update(value).digest("hex");
-  return `${value}.${hmac}`;
+function toHex(buffer: ArrayBuffer): string {
+  return [...new Uint8Array(buffer)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export function createSessionCookieValue(): string {
+async function sign(value: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(getSecret()),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+  return `${value}.${toHex(signatureBuffer)}`;
+}
+
+export async function createSessionCookieValue(): Promise<string> {
   return sign(SESSION_VALUE);
 }
 
-export function isValidSessionCookie(value: string | undefined): boolean {
+export async function isValidSessionCookie(value: string | undefined): Promise<boolean> {
   if (!value) {
     return false;
   }
@@ -32,9 +41,14 @@ export function isValidSessionCookie(value: string | undefined): boolean {
   if (payload !== SESSION_VALUE) {
     return false;
   }
-  const expected = sign(payload).split(".")[1];
+  const expectedSigned = await sign(payload);
+  const expected = expectedSigned.split(".")[1];
   if (signature.length !== expected.length) {
     return false;
   }
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  let mismatch = 0;
+  for (let i = 0; i < signature.length; i++) {
+    mismatch |= signature.charCodeAt(i) ^ expected.charCodeAt(i);
+  }
+  return mismatch === 0;
 }

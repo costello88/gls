@@ -32,6 +32,10 @@ export async function createStore(
   return repo.create(input);
 }
 
+function nullToUndefined<T>(value: T | null): T | undefined {
+  return value === null ? undefined : value;
+}
+
 export async function updateStore(
   repo: StoreRepository,
   id: string,
@@ -41,7 +45,18 @@ export async function updateStore(
   if (!existing) {
     throw new Error(`Store ${id} not found`);
   }
-  const merged: StoreInput = { ...existing, ...edits };
+  const merged: StoreInput = {
+    type: edits.type ?? existing.type,
+    name: edits.name ?? existing.name,
+    customerNo: edits.customerNo ?? existing.customerNo,
+    defaultWeightKg: edits.defaultWeightKg ?? existing.defaultWeightKg,
+    automationEnabled: edits.automationEnabled ?? existing.automationEnabled,
+    shopDomain: edits.shopDomain ?? nullToUndefined(existing.shopDomain),
+    shopifyAccessToken: edits.shopifyAccessToken ?? nullToUndefined(existing.shopifyAccessToken),
+    siteUrl: edits.siteUrl ?? nullToUndefined(existing.siteUrl),
+    wooConsumerKey: edits.wooConsumerKey ?? nullToUndefined(existing.wooConsumerKey),
+    wooConsumerSecret: edits.wooConsumerSecret ?? nullToUndefined(existing.wooConsumerSecret),
+  };
   const errors = validateStoreInput(merged);
   if (errors.length > 0) {
     throw new Error(errors.join("; "));
