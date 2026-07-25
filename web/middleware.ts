@@ -3,7 +3,11 @@ import { COOKIE_NAME, isValidSessionCookie } from "./lib/session";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth/login")) {
+  if (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/api/auth/login") ||
+    pathname.startsWith("/api/cron")
+  ) {
     return NextResponse.next();
   }
 

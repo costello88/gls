@@ -544,11 +544,11 @@ git commit -m "Add runAutomatedSync, reusing syncStore and printOrder"
 ```typescript
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../../lib/automation/run", () => ({
+vi.mock("../../../../../lib/automation/run", () => ({
   runAutomatedSync: vi.fn(),
 }));
 
-import { runAutomatedSync } from "../../../../lib/automation/run";
+import { runAutomatedSync } from "../../../../../lib/automation/run";
 import { handleCronSync } from "../shared";
 
 const mockedRunAutomatedSync = vi.mocked(runAutomatedSync);
