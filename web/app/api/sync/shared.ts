@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { syncStore } from "../../../lib/ingest/sync";
-import type { OrderRepository, StoreConfig, SyncResult } from "../../../lib/ingest/types";
+import { toStoreConfig } from "../../../lib/dashboard/storeConfig";
+import type { OrderRepository, SyncResult } from "../../../lib/ingest/types";
 import type { StoreRepository } from "../../../lib/dashboard/types";
 
 export async function handleSync(
@@ -11,27 +12,7 @@ export async function handleSync(
   const results: Record<string, SyncResult> = {};
 
   for (const store of stores) {
-    const config: StoreConfig =
-      store.type === "SHOPIFY"
-        ? {
-            id: store.id,
-            type: "SHOPIFY",
-            defaultWeightKg: store.defaultWeightKg,
-            customerNo: store.customerNo,
-            shopDomain: store.shopDomain ?? "",
-            shopifyAccessToken: store.shopifyAccessToken ?? "",
-          }
-        : {
-            id: store.id,
-            type: "WOOCOMMERCE",
-            defaultWeightKg: store.defaultWeightKg,
-            customerNo: store.customerNo,
-            siteUrl: store.siteUrl ?? "",
-            wooConsumerKey: store.wooConsumerKey ?? "",
-            wooConsumerSecret: store.wooConsumerSecret ?? "",
-          };
-
-    results[store.id] = await syncStore(config, orderRepo);
+    results[store.id] = await syncStore(toStoreConfig(store), orderRepo);
   }
 
   return NextResponse.json({ results });
