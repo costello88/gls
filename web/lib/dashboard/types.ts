@@ -33,6 +33,8 @@ export interface DashboardOrderRepository extends OrderRepository {
   ): Promise<OrderRecord>;
   markPrinted(id: string, label: string, trackingLink: string): Promise<OrderRecord>;
   markError(id: string, message: string): Promise<OrderRecord>;
+  listPrintable(storeIds: string[]): Promise<OrderRecord[]>;
+  deleteAll(): Promise<void>;
 }
 
 export type StoreType = "SHOPIFY" | "WOOCOMMERCE";

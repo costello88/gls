@@ -86,4 +86,16 @@ export class PrismaOrderRepository implements DashboardOrderRepository {
     });
     return toOrderRecord(order);
   }
+
+  async listPrintable(storeIds: string[]): Promise<OrderRecord[]> {
+    const orders = await prisma.order.findMany({
+      where: { storeId: { in: storeIds }, status: { in: ["PENDING", "ERROR"] } },
+      orderBy: { createdAt: "desc" },
+    });
+    return orders.map(toOrderRecord);
+  }
+
+  async deleteAll(): Promise<void> {
+    await prisma.order.deleteMany({});
+  }
 }

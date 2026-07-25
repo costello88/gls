@@ -67,6 +67,14 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
   async markError(id: string, message: string): Promise<OrderRecord> {
     return this.update(id, { status: "ERROR", reviewReason: message });
   }
+
+  async listPrintable(): Promise<OrderRecord[]> {
+    throw new Error("not used");
+  }
+
+  async deleteAll(): Promise<void> {
+    throw new Error("not used");
+  }
 }
 
 describe("handleListOrders", () => {
