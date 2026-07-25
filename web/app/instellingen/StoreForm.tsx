@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+const inputClass =
+  "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400";
+const labelClass = "mb-1 block text-sm font-medium text-slate-700";
+
 export function StoreForm() {
   const router = useRouter();
   const [type, setType] = useState<"SHOPIFY" | "WOOCOMMERCE">("SHOPIFY");
@@ -40,55 +44,76 @@ export function StoreForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label style={{ display: "block", marginBottom: 8 }}>
-        Type
-        <select value={type} onChange={(e) => setType(e.target.value as "SHOPIFY" | "WOOCOMMERCE")}>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <label className="block">
+        <span className={labelClass}>Type</span>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as "SHOPIFY" | "WOOCOMMERCE")}
+          className={inputClass}
+        >
           <option value="SHOPIFY">Shopify</option>
           <option value="WOOCOMMERCE">WooCommerce</option>
         </select>
       </label>
-      <label style={{ display: "block", marginBottom: 8 }}>
-        Naam
-        <input value={name} onChange={(e) => setName(e.target.value)} style={{ display: "block", width: "100%" }} />
+      <label className="block">
+        <span className={labelClass}>Naam</span>
+        <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
       </label>
-      <label style={{ display: "block", marginBottom: 8 }}>
-        GLS klantnummer
-        <input value={customerNo} onChange={(e) => setCustomerNo(e.target.value)} style={{ display: "block", width: "100%" }} />
+      <label className="block">
+        <span className={labelClass}>GLS klantnummer</span>
+        <input value={customerNo} onChange={(e) => setCustomerNo(e.target.value)} className={inputClass} />
       </label>
-      <label style={{ display: "block", marginBottom: 8 }}>
-        Standaard gewicht (kg)
-        <input value={defaultWeightKg} onChange={(e) => setDefaultWeightKg(e.target.value)} style={{ display: "block", width: "100%" }} />
+      <label className="block">
+        <span className={labelClass}>Standaard gewicht (kg)</span>
+        <input value={defaultWeightKg} onChange={(e) => setDefaultWeightKg(e.target.value)} className={inputClass} />
       </label>
       {type === "SHOPIFY" ? (
         <>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Shopify domein
-            <input value={shopDomain} onChange={(e) => setShopDomain(e.target.value)} style={{ display: "block", width: "100%" }} />
+          <label className="block">
+            <span className={labelClass}>Shopify domein</span>
+            <input value={shopDomain} onChange={(e) => setShopDomain(e.target.value)} className={inputClass} />
           </label>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Access token
-            <input value={shopifyAccessToken} onChange={(e) => setShopifyAccessToken(e.target.value)} style={{ display: "block", width: "100%" }} />
+          <label className="block">
+            <span className={labelClass}>Access token</span>
+            <input
+              value={shopifyAccessToken}
+              onChange={(e) => setShopifyAccessToken(e.target.value)}
+              className={inputClass}
+            />
           </label>
         </>
       ) : (
         <>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Site URL
-            <input value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} style={{ display: "block", width: "100%" }} />
+          <label className="block">
+            <span className={labelClass}>Site URL</span>
+            <input value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} className={inputClass} />
           </label>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Consumer key
-            <input value={wooConsumerKey} onChange={(e) => setWooConsumerKey(e.target.value)} style={{ display: "block", width: "100%" }} />
+          <label className="block">
+            <span className={labelClass}>Consumer key</span>
+            <input
+              value={wooConsumerKey}
+              onChange={(e) => setWooConsumerKey(e.target.value)}
+              className={inputClass}
+            />
           </label>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Consumer secret
-            <input value={wooConsumerSecret} onChange={(e) => setWooConsumerSecret(e.target.value)} style={{ display: "block", width: "100%" }} />
+          <label className="block">
+            <span className={labelClass}>Consumer secret</span>
+            <input
+              value={wooConsumerSecret}
+              onChange={(e) => setWooConsumerSecret(e.target.value)}
+              className={inputClass}
+            />
           </label>
         </>
       )}
-      <button type="submit">Toevoegen</button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <button
+        type="submit"
+        className="rounded bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500"
+      >
+        Toevoegen
+      </button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </form>
   );
 }
