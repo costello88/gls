@@ -24,21 +24,31 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ maxWidth: 320, margin: "80px auto", fontFamily: "sans-serif" }}>
-      <h1>GLS Sync</h1>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Wachtwoord
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ display: "block", width: "100%", marginTop: 4, marginBottom: 12 }}
-          />
-        </label>
-        <button type="submit">Inloggen</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-      </form>
+    <main className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow-sm">
+        <h1 className="mb-6 text-center text-xl font-bold">
+          <span className="text-black">GLS </span>
+          <span className="text-yellow-500">Sync</span>
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">Wachtwoord</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+            />
+          </label>
+          <button
+            type="submit"
+            className="w-full rounded bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-yellow-500"
+          >
+            Inloggen
+          </button>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+        </form>
+      </div>
     </main>
   );
 }
