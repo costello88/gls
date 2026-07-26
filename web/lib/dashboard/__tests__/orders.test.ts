@@ -114,7 +114,7 @@ describe("reviewOrder", () => {
     expect(result.email).toBe("jan@voorbeeld.be");
   });
 
-  it("keeps NEEDS_REVIEW with an updated reason when still invalid", async () => {
+  it("moves to PENDING even when the edited fields are still invalid", async () => {
     const repo = new FakeDashboardOrderRepository();
     repo.seed(
       makeOrderRecord({
@@ -127,8 +127,26 @@ describe("reviewOrder", () => {
 
     const result = await reviewOrder(repo, "1", { email: "nog steeds kapot" });
 
-    expect(result.status).toBe("NEEDS_REVIEW");
-    expect(result.reviewReason).toContain("Email");
+    expect(result.status).toBe("PENDING");
+    expect(result.reviewReason).toBeNull();
+  });
+
+  it("moves to PENDING even with no edits at all (skip)", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(
+      makeOrderRecord({
+        id: "1",
+        status: "NEEDS_REVIEW",
+        reviewReason: "Email: ongeldig of ontbrekend",
+        email: "kapot",
+      }),
+    );
+
+    const result = await reviewOrder(repo, "1", {});
+
+    expect(result.status).toBe("PENDING");
+    expect(result.reviewReason).toBeNull();
+    expect(result.email).toBe("kapot");
   });
 });
 

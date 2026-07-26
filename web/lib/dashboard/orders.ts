@@ -1,4 +1,3 @@
-import { checkOrder } from "../validate";
 import type { CreateLabelResult, LabelType, NormalizedShipment } from "../gls/types";
 import type { DashboardOrderRepository, OrderEdits, OrderFilter, OrderRecord } from "./types";
 
@@ -25,17 +24,10 @@ export async function reviewOrder(
     throw new Error(`Order ${id} not found`);
   }
 
-  const merged = { ...existing, ...edits };
-  const reasons = checkOrder({
-    email: merged.email,
-    phone: merged.phone,
-    countryCode: merged.countryCode,
-  });
-
   return repo.update(id, {
     ...edits,
-    status: reasons.length > 0 ? "NEEDS_REVIEW" : "PENDING",
-    reviewReason: reasons.length > 0 ? reasons.join("; ") : null,
+    status: "PENDING",
+    reviewReason: null,
   });
 }
 
