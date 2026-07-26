@@ -7,6 +7,7 @@ import { StatusBadge } from "./components/StatusBadge";
 import { SyncButton } from "./SyncButton";
 import { PrintButton } from "./PrintButton";
 import { ClearOrdersButton } from "./ClearOrdersButton";
+import { BulkPrintButton } from "./BulkPrintButton";
 
 const TABS: { label: string; status: OrderRecordStatus }[] = [
   { label: "Klaar om te printen", status: "PENDING" },
@@ -55,6 +56,9 @@ export default async function DashboardPage({
         <div className="flex items-center gap-2">
           <SyncButton />
           <ClearOrdersButton />
+          {(activeStatus === "PENDING" || activeStatus === "ERROR") && (
+            <BulkPrintButton orders={orders.map((order) => ({ id: order.id, name: order.name }))} />
+          )}
         </div>
       </div>
 
