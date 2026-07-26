@@ -126,6 +126,29 @@ describe("createGlsLabel", () => {
     });
   });
 
+  it("reads the label from units[0].label when there is no top-level labels/shipmentTrackingLink (real GLS response shape)", async () => {
+    mockedPostGlsApi.mockResolvedValue({
+      httpStatus: 200,
+      json: {
+        error: false,
+        status: "200",
+        message: null,
+        transactionId: "txn-1",
+        units: [{ unitId: "49807", unitNo: "11850080202728", uniqueNo: "00L1VQ9R", label: "base64-label-data" }],
+      },
+      text: "",
+    });
+
+    const result = await createGlsLabel(shipment, "pdf", "11850079");
+
+    expect(result).toEqual({
+      label: "base64-label-data",
+      trackingLink: "",
+      unitTrackingLink: "",
+      transactionId: "txn-1",
+    });
+  });
+
   it("throws GlsApiError when error is true inside an HTTP 200 response", async () => {
     mockedPostGlsApi.mockResolvedValue({
       httpStatus: 200,
