@@ -24,6 +24,10 @@ export default async function DashboardPage({
   const activeStatus = (status as OrderRecordStatus | undefined) ?? "PENDING";
   const repository = new PrismaOrderRepository();
   const orders = await listOrders(repository, { status: activeStatus });
+  const needsReviewCount =
+    activeStatus === "NEEDS_REVIEW"
+      ? orders.length
+      : (await listOrders(repository, { status: "NEEDS_REVIEW" })).length;
 
   return (
     <AppShell>
@@ -40,6 +44,11 @@ export default async function DashboardPage({
               }`}
             >
               {tab.label}
+              {tab.status === "NEEDS_REVIEW" && needsReviewCount > 0 && (
+                <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-xs font-bold text-white">
+                  {needsReviewCount}
+                </span>
+              )}
             </Link>
           ))}
         </div>

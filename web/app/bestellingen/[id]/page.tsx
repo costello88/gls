@@ -19,8 +19,7 @@ export default async function ReviewPage({
   return (
     <AppShell>
       <div className="mx-auto max-w-lg rounded-lg bg-white p-6 shadow-sm">
-        <h1 className="mb-2 text-xl font-semibold text-slate-900">Bestelling controleren</h1>
-        <p className="mb-6 text-sm text-red-600">{order.reviewReason}</p>
+        <h1 className="mb-6 text-xl font-semibold text-slate-900">Bestelling controleren</h1>
         <ReviewForm order={order} />
       </div>
     </AppShell>
