@@ -86,6 +86,8 @@ export async function createGlsLabel(
     throw new GlsApiError(
       "GLS API response is missing expected label fields",
       response.httpStatus,
+      json.status,
+      json,
     );
   }
 
