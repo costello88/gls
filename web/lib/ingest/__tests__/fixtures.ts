@@ -5,6 +5,7 @@ export function makeRawShopifyOrder(overrides: Partial<RawShopifyOrder> = {}): R
   return {
     id: 1001,
     name: "#1001",
+    created_at: "2026-07-25T10:00:00Z",
     contact_email: "jan@voorbeeld.be",
     customer: { email: "jan@voorbeeld.be", phone: "+32470123456" },
     shipping_address: {
@@ -26,6 +27,7 @@ export function makeRawWooCommerceOrder(
   return {
     id: 2001,
     number: "2001",
+    date_created: "2026-07-25T11:00:00",
     billing: {
       first_name: "Ingrid",
       last_name: "Op den Buijs",

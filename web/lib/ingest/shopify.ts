@@ -6,6 +6,7 @@ const NEXT_LINK_RE = /<([^>]+)>;\s*rel="next"/;
 export interface RawShopifyOrder {
   id: number;
   name: string;
+  created_at?: string;
   contact_email?: string;
   customer?: { email?: string; phone?: string };
   shipping_address?: {

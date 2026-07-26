@@ -6,6 +6,7 @@ const STYLES: Record<OrderRecordStatus, { label: string; className: string }> = 
   READY: { label: "Klaar", className: "bg-blue-100 text-blue-800" },
   PRINTED: { label: "Geprint", className: "bg-green-100 text-green-800" },
   ERROR: { label: "Fout", className: "bg-red-100 text-red-800" },
+  IGNORED: { label: "Genegeerd", className: "bg-slate-100 text-slate-400" },
 };
 
 export function StatusBadge({ status }: { status: OrderRecordStatus }) {

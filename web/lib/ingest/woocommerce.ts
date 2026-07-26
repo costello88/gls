@@ -3,6 +3,7 @@ import type { StoreConfig } from "./types";
 export interface RawWooCommerceOrder {
   id: number;
   number: string;
+  date_created?: string;
   billing?: {
     first_name?: string;
     last_name?: string;

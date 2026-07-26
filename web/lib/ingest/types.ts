@@ -51,7 +51,7 @@ export interface OrderRecordInput {
   email: string;
   weightKg: number;
   customerNo: string;
-  status: "PENDING" | "NEEDS_REVIEW";
+  status: "PENDING" | "NEEDS_REVIEW" | "IGNORED";
   reviewReason: string | null;
 }
 
