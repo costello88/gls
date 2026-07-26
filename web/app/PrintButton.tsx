@@ -12,11 +12,12 @@ export function PrintButton({ orderId }: { orderId: string }) {
     setError(null);
     setLoading(true);
     const response = await fetch(`/api/orders/${orderId}/print`, { method: "POST" });
-    const body = (await response.json()) as { label?: string; error?: string };
+    const body = (await response.json()) as { label?: string; error?: string; details?: unknown };
     setLoading(false);
 
     if (!response.ok || !body.label) {
-      setError(body.error ?? "Printen mislukt");
+      const details = body.details ? ` (${JSON.stringify(body.details)})` : "";
+      setError((body.error ?? "Printen mislukt") + details);
       return;
     }
 

@@ -33,7 +33,7 @@ export async function handlePrintOrder(
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof GlsApiError) {
-      return NextResponse.json({ error: err.message }, { status: 502 });
+      return NextResponse.json({ error: err.message, details: err.glsErrors }, { status: 502 });
     }
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

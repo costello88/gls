@@ -13,11 +13,16 @@ interface ApiCreateLabelResponse {
   units?: Array<{ unitTrackingLink?: string }>;
 }
 
+function sanitizeReference(reference: string): string {
+  return reference.replace(/[^A-Za-z0-9-]/g, "");
+}
+
 export async function createGlsLabel(
   shipment: NormalizedShipment,
   labelType: LabelType,
   customerNo: string,
 ): Promise<CreateLabelResult> {
+  const reference = sanitizeReference(shipment.reference);
   const requestBody = {
     username: process.env.GLS_USERNAME,
     password: process.env.GLS_PASSWORD,
@@ -25,10 +30,10 @@ export async function createGlsLabel(
     shippingSystemVersion: "1.0",
     shiptype: "p",
     customerNo,
-    reference: shipment.reference,
+    reference,
     units: [
       {
-        unitId: shipment.reference,
+        unitId: reference,
         unitType: "co",
         weight: shipment.weightKg,
       },

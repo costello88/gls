@@ -53,11 +53,11 @@ describe("createGlsLabel", () => {
         password: "test-pass",
         customerNo: "11850079",
         shiptype: "p",
-        reference: "#1042",
+        reference: "1042",
         labelType: "pdf",
         units: [
           expect.objectContaining({
-            unitId: "#1042",
+            unitId: "1042",
             unitType: "co",
             weight: 1.5,
           }),
@@ -75,6 +75,30 @@ describe("createGlsLabel", () => {
             addresseeType: "p",
           }),
         },
+      }),
+    );
+  });
+
+  it("strips non-alphanumeric characters from the reference and unit ID", async () => {
+    mockedPostGlsApi.mockResolvedValue({
+      httpStatus: 200,
+      json: {
+        error: false,
+        transactionId: "txn-1",
+        shipmentTrackingLink: "https://track.gls/txn-1",
+        labels: "base64-label-data",
+        units: [{ unitTrackingLink: "https://track.gls/unit-1" }],
+      },
+      text: "",
+    });
+
+    await createGlsLabel({ ...shipment, reference: "#1042 / A" }, "pdf", "11850079");
+
+    expect(mockedPostGlsApi).toHaveBeenCalledWith(
+      "/Label/Create",
+      expect.objectContaining({
+        reference: "1042A",
+        units: [expect.objectContaining({ unitId: "1042A" })],
       }),
     );
   });
