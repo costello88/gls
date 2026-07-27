@@ -10,6 +10,7 @@ import { ClearOrdersButton } from "./ClearOrdersButton";
 import { BulkPrintButton } from "./BulkPrintButton";
 import { ViewLabelButton } from "./ViewLabelButton";
 import { ConfirmLabelButton } from "./ConfirmLabelButton";
+import { DeleteLabelButton } from "./DeleteLabelButton";
 
 const TABS: { label: string; status: OrderRecordStatus }[] = [
   { label: "Klaar om te printen", status: "PENDING" },
@@ -102,6 +103,12 @@ export default async function DashboardPage({
                     <span className="inline-flex items-center gap-3">
                       <ViewLabelButton label={order.label} />
                       <ConfirmLabelButton orderId={order.id} />
+                      <DeleteLabelButton orderId={order.id} />
+                      <PrintButton
+                        orderId={order.id}
+                        label="Print opnieuw"
+                        confirmMessage="Dit maakt een NIEUWE zending bij GLS aan. Weet je zeker dat je dit label opnieuw wilt printen?"
+                      />
                     </span>
                   )}
                 </td>

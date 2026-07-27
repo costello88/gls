@@ -3,12 +3,23 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function PrintButton({ orderId }: { orderId: string }) {
+export function PrintButton({
+  orderId,
+  label = "Printen",
+  confirmMessage,
+}: {
+  orderId: string;
+  label?: string;
+  confirmMessage?: string;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleClick() {
+    if (confirmMessage && !window.confirm(confirmMessage)) {
+      return;
+    }
     setError(null);
     setLoading(true);
     const response = await fetch(`/api/orders/${orderId}/print`, { method: "POST" });
@@ -38,7 +49,7 @@ export function PrintButton({ orderId }: { orderId: string }) {
         disabled={loading}
         className="rounded bg-yellow-400 px-3 py-1.5 text-sm font-medium text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? "Bezig..." : "Printen"}
+        {loading ? "Bezig..." : label}
       </button>
       {error && <span className="text-sm text-red-600">{error}</span>}
     </span>
