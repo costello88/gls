@@ -19,6 +19,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/instellingen" className="text-sm font-medium text-slate-200 hover:text-white">
               Instellingen
             </Link>
+            <Link href="/opruimen" className="text-sm font-medium text-slate-200 hover:text-white">
+              Opruimen
+            </Link>
             <LogoutButton />
           </nav>
         </div>
