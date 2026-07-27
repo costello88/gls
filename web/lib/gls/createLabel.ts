@@ -10,7 +10,7 @@ interface ApiCreateLabelResponse {
   transactionId?: string;
   shipmentTrackingLink?: string;
   labels?: string;
-  units?: Array<{ label?: string; unitTrackingLink?: string }>;
+  units?: Array<{ label?: string; unitTrackingLink?: string; unitNo?: string }>;
 }
 
 function sanitizeReference(reference: string): string {
@@ -83,8 +83,9 @@ export async function createGlsLabel(
   }
 
   const label = json.labels ?? json.units?.[0]?.label;
+  const unitNo = json.units?.[0]?.unitNo;
 
-  if (!label || !json.transactionId) {
+  if (!label || !json.transactionId || !unitNo) {
     throw new GlsApiError(
       "GLS API response is missing expected label fields",
       response.httpStatus,
@@ -98,5 +99,6 @@ export async function createGlsLabel(
     trackingLink: json.shipmentTrackingLink ?? "",
     unitTrackingLink: json.units?.[0]?.unitTrackingLink ?? "",
     transactionId: json.transactionId,
+    unitNo,
   };
 }

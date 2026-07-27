@@ -18,4 +18,5 @@ export interface CreateLabelResult {
   trackingLink: string;
   unitTrackingLink: string;
   transactionId: string;
+  unitNo: string;
 }

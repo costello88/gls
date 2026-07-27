@@ -39,7 +39,7 @@ describe("createGlsLabel", () => {
         transactionId: "txn-1",
         shipmentTrackingLink: "https://track.gls/txn-1",
         labels: "base64-label-data",
-        units: [{ unitTrackingLink: "https://track.gls/unit-1" }],
+        units: [{ unitTrackingLink: "https://track.gls/unit-1", unitNo: "11850080202728" }],
       },
       text: "",
     });
@@ -87,7 +87,7 @@ describe("createGlsLabel", () => {
         transactionId: "txn-1",
         shipmentTrackingLink: "https://track.gls/txn-1",
         labels: "base64-label-data",
-        units: [{ unitTrackingLink: "https://track.gls/unit-1" }],
+        units: [{ unitTrackingLink: "https://track.gls/unit-1", unitNo: "11850080202728" }],
       },
       text: "",
     });
@@ -111,7 +111,7 @@ describe("createGlsLabel", () => {
         transactionId: "txn-1",
         shipmentTrackingLink: "https://track.gls/txn-1",
         labels: "base64-label-data",
-        units: [{ unitTrackingLink: "https://track.gls/unit-1" }],
+        units: [{ unitTrackingLink: "https://track.gls/unit-1", unitNo: "11850080202728" }],
       },
       text: "",
     });
@@ -123,6 +123,7 @@ describe("createGlsLabel", () => {
       trackingLink: "https://track.gls/txn-1",
       unitTrackingLink: "https://track.gls/unit-1",
       transactionId: "txn-1",
+      unitNo: "11850080202728",
     });
   });
 
@@ -146,6 +147,7 @@ describe("createGlsLabel", () => {
       trackingLink: "",
       unitTrackingLink: "",
       transactionId: "txn-1",
+      unitNo: "11850080202728",
     });
   });
 

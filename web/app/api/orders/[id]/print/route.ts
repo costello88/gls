@@ -1,4 +1,4 @@
-import { createGlsLabel } from "../../../../../lib/gls/createLabel";
+import { printGlsLabel } from "../../../../../lib/gls/printLabel";
 import { PrismaOrderRepository } from "../../../../../lib/repositories/orderRepository";
 import { handlePrintOrder } from "../../shared";
 
@@ -9,5 +9,5 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   const { id } = await params;
-  return handlePrintOrder(repository, id, createGlsLabel);
+  return handlePrintOrder(repository, id, printGlsLabel);
 }
