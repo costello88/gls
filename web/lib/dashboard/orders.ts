@@ -1,5 +1,13 @@
+import { fulfillOrder } from "../ingest/fulfill";
+import { toStoreConfig } from "./storeConfig";
 import type { CreateLabelResult, LabelType, NormalizedShipment } from "../gls/types";
-import type { DashboardOrderRepository, OrderEdits, OrderFilter, OrderRecord } from "./types";
+import type {
+  DashboardOrderRepository,
+  OrderEdits,
+  OrderFilter,
+  OrderRecord,
+  StoreRepository,
+} from "./types";
 
 export type CreateLabelFn = (
   shipment: NormalizedShipment,
@@ -33,6 +41,7 @@ export async function reviewOrder(
 
 export async function printOrder(
   repo: DashboardOrderRepository,
+  storeRepo: StoreRepository,
   id: string,
   createLabelFn: CreateLabelFn,
 ): Promise<{ label: string; trackingLink: string }> {
@@ -60,6 +69,18 @@ export async function printOrder(
     );
 
     await repo.markPrinted(id, result.label, result.trackingLink);
+
+    const store = await storeRepo.get(order.storeId);
+    if (store) {
+      try {
+        await fulfillOrder(toStoreConfig(store), order.sourceOrderId, result.unitNo);
+      } catch {
+        // Non-fatal: the label already exists at GLS. Failing to notify the
+        // store must not revert the order to a retryable/printable state --
+        // that would create a duplicate shipment on the next print attempt.
+      }
+    }
+
     return { label: result.label, trackingLink: result.trackingLink };
   } catch (err) {
     await repo.markError(id, (err as Error).message);

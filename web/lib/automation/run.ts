@@ -32,7 +32,7 @@ export async function runAutomatedSync(
       const result = results.find((r) => r.storeId === order.storeId);
       if (!result) continue;
       try {
-        await printOrder(orderRepo, order.id, createLabelFn);
+        await printOrder(orderRepo, storeRepo, order.id, createLabelFn);
         result.printed += 1;
       } catch {
         result.failed += 1;

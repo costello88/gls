@@ -1,7 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 import { GlsApiError } from "../../../../lib/gls/errors";
-import type { DashboardOrderRepository, OrderFilter, OrderRecord } from "../../../../lib/dashboard/types";
+import type {
+  DashboardOrderRepository,
+  OrderFilter,
+  OrderRecord,
+  StoreRecord,
+  StoreRepository,
+} from "../../../../lib/dashboard/types";
 import { handleClearOrders, handleListOrders, handlePrintOrder, handleReviewOrder } from "../shared";
+
+vi.mock("../../../../lib/ingest/fulfill", () => ({
+  fulfillOrder: vi.fn().mockResolvedValue(undefined),
+}));
 
 function makeOrderRecord(overrides: Partial<OrderRecord> = {}): OrderRecord {
   return {
@@ -77,6 +87,30 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
   }
 }
 
+class FakeStoreRepository implements StoreRepository {
+  constructor(private stores: StoreRecord[] = []) {}
+
+  async list(): Promise<StoreRecord[]> {
+    return this.stores;
+  }
+
+  async get(id: string): Promise<StoreRecord | null> {
+    return this.stores.find((s) => s.id === id) ?? null;
+  }
+
+  async create(): Promise<StoreRecord> {
+    throw new Error("not used");
+  }
+
+  async update(): Promise<StoreRecord> {
+    throw new Error("not used");
+  }
+
+  async delete(): Promise<void> {
+    throw new Error("not used");
+  }
+}
+
 describe("handleListOrders", () => {
   it("returns orders filtered by status", async () => {
     const repo = new FakeDashboardOrderRepository();
@@ -120,14 +154,16 @@ describe("handlePrintOrder", () => {
   it("returns the label on success", async () => {
     const repo = new FakeDashboardOrderRepository();
     repo.seed(makeOrderRecord({ id: "1" }));
+    const storeRepo = new FakeStoreRepository();
     const createLabelFn = vi.fn().mockResolvedValue({
       label: "base64-label",
       trackingLink: "https://track.gls/1",
       unitTrackingLink: "https://track.gls/unit-1",
       transactionId: "txn-1",
+      unitNo: "11850080202728",
     });
 
-    const response = await handlePrintOrder(repo, "1", createLabelFn);
+    const response = await handlePrintOrder(repo, storeRepo, "1", createLabelFn);
     const body = (await response.json()) as { label: string; trackingLink: string };
 
     expect(response.status).toBe(200);
@@ -137,9 +173,10 @@ describe("handlePrintOrder", () => {
   it("returns a 502 with the GLS error message on failure", async () => {
     const repo = new FakeDashboardOrderRepository();
     repo.seed(makeOrderRecord({ id: "1" }));
+    const storeRepo = new FakeStoreRepository();
     const createLabelFn = vi.fn().mockRejectedValue(new GlsApiError("Ongeldige postcode", 422));
 
-    const response = await handlePrintOrder(repo, "1", createLabelFn);
+    const response = await handlePrintOrder(repo, storeRepo, "1", createLabelFn);
     const body = (await response.json()) as { error: string };
 
     expect(response.status).toBe(502);

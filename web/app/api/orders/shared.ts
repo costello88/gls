@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { GlsApiError } from "../../../lib/gls/errors";
 import { clearOrders, listOrders, printOrder, reviewOrder, type CreateLabelFn } from "../../../lib/dashboard/orders";
-import type { DashboardOrderRepository, OrderEdits, OrderFilter } from "../../../lib/dashboard/types";
+import type {
+  DashboardOrderRepository,
+  OrderEdits,
+  OrderFilter,
+  StoreRepository,
+} from "../../../lib/dashboard/types";
 
 export async function handleListOrders(
   request: Request,
@@ -25,11 +30,12 @@ export async function handleReviewOrder(
 
 export async function handlePrintOrder(
   repo: DashboardOrderRepository,
+  storeRepo: StoreRepository,
   id: string,
   createLabelFn: CreateLabelFn,
 ): Promise<Response> {
   try {
-    const result = await printOrder(repo, id, createLabelFn);
+    const result = await printOrder(repo, storeRepo, id, createLabelFn);
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof GlsApiError) {

@@ -48,3 +48,45 @@ export async function fetchShopifyOrders(store: ShopifyStoreConfig): Promise<Raw
 
   return orders;
 }
+
+interface FulfillmentOrder {
+  id: number;
+  status: string;
+}
+
+export async function fulfillShopifyOrder(
+  store: ShopifyStoreConfig,
+  sourceOrderId: string,
+  trackingNumber: string,
+): Promise<void> {
+  const headers = {
+    "X-Shopify-Access-Token": store.shopifyAccessToken,
+    "Content-Type": "application/json",
+  };
+
+  const fulfillmentOrdersResponse = await fetch(
+    `https://${store.shopDomain}/admin/api/${API_VERSION}/orders/${sourceOrderId}/fulfillment_orders.json`,
+    { headers },
+  );
+  const fulfillmentOrdersJson = (await fulfillmentOrdersResponse.json()) as {
+    fulfillment_orders?: FulfillmentOrder[];
+  };
+  const openFulfillmentOrder = fulfillmentOrdersJson.fulfillment_orders?.find(
+    (fulfillmentOrder) => fulfillmentOrder.status === "open" || fulfillmentOrder.status === "in_progress",
+  );
+  if (!openFulfillmentOrder) {
+    return;
+  }
+
+  await fetch(`https://${store.shopDomain}/admin/api/${API_VERSION}/fulfillments.json`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      fulfillment: {
+        line_items_by_fulfillment_order: [{ fulfillment_order_id: openFulfillmentOrder.id }],
+        tracking_info: { number: trackingNumber, company: "GLS" },
+        notify_customer: true,
+      },
+    }),
+  });
+}

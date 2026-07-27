@@ -49,3 +49,15 @@ export async function fetchWooCommerceOrders(
 
   return orders;
 }
+
+export async function fulfillWooCommerceOrder(
+  store: WooCommerceStoreConfig,
+  sourceOrderId: string,
+): Promise<void> {
+  const auth = Buffer.from(`${store.wooConsumerKey}:${store.wooConsumerSecret}`).toString("base64");
+  await fetch(`${store.siteUrl}/wp-json/wc/v3/orders/${sourceOrderId}`, {
+    method: "PUT",
+    headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "completed" }),
+  });
+}
