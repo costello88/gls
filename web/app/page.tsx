@@ -8,6 +8,7 @@ import { SyncButton } from "./SyncButton";
 import { PrintButton } from "./PrintButton";
 import { ClearOrdersButton } from "./ClearOrdersButton";
 import { BulkPrintButton } from "./BulkPrintButton";
+import { ViewLabelButton } from "./ViewLabelButton";
 
 const TABS: { label: string; status: OrderRecordStatus }[] = [
   { label: "Klaar om te printen", status: "PENDING" },
@@ -96,6 +97,7 @@ export default async function DashboardPage({
                   {(order.status === "PENDING" || order.status === "ERROR") && (
                     <PrintButton orderId={order.id} />
                   )}
+                  {order.status === "PRINTED" && order.label && <ViewLabelButton label={order.label} />}
                 </td>
               </tr>
             ))}

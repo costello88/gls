@@ -33,26 +33,29 @@ export function BulkPrintButton({ orders }: { orders: OrderSummary[] }) {
 
   async function handleClick() {
     setLoading(true);
-    setResults(null);
-    const collected: BulkPrintResult[] = [];
+    setResults([]);
 
     for (const order of orders) {
-      const response = await fetch(`/api/orders/${order.id}/print`, { method: "POST" });
-      const body = (await response.json()) as { label?: string; error?: string };
-      if (response.ok && body.label) {
-        collected.push({ id: order.id, name: order.name, success: true, labelUrl: base64ToBlobUrl(body.label) });
-      } else {
-        collected.push({
+      let result: BulkPrintResult;
+      try {
+        const response = await fetch(`/api/orders/${order.id}/print`, { method: "POST" });
+        const body = (await response.json()) as { label?: string; error?: string };
+        result =
+          response.ok && body.label
+            ? { id: order.id, name: order.name, success: true, labelUrl: base64ToBlobUrl(body.label) }
+            : { id: order.id, name: order.name, success: false, error: body.error ?? "Printen mislukt" };
+      } catch (err) {
+        result = {
           id: order.id,
           name: order.name,
           success: false,
-          error: body.error ?? "Printen mislukt",
-        });
+          error: (err as Error).message || "Printen mislukt",
+        };
       }
+      setResults((prev) => [...(prev ?? []), result]);
     }
 
     setLoading(false);
-    setResults(collected);
     router.refresh();
   }
 
