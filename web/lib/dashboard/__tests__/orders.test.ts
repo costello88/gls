@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { GlsApiError } from "../../gls/errors";
-import { clearOrders, listOrders, printOrder, reviewOrder } from "../orders";
+import { describe, expect, it } from "vitest";
+import { clearOrders, exportOrders, listOrders, printOrder, reviewOrder } from "../orders";
 import type {
   DashboardOrderRepository,
   OrderEdits,
@@ -9,14 +8,6 @@ import type {
   StoreRecord,
   StoreRepository,
 } from "../types";
-
-vi.mock("../../ingest/fulfill", () => ({
-  fulfillOrder: vi.fn().mockResolvedValue(undefined),
-}));
-
-import { fulfillOrder } from "../../ingest/fulfill";
-
-const mockedFulfillOrder = vi.mocked(fulfillOrder);
 
 function makeOrderRecord(overrides: Partial<OrderRecord> = {}): OrderRecord {
   return {
@@ -199,71 +190,62 @@ describe("reviewOrder", () => {
 });
 
 describe("printOrder", () => {
-  afterEach(() => {
-    mockedFulfillOrder.mockClear();
-  });
-
-  it("marks the order PRINTED on success", async () => {
+  it("builds a GLS import CSV for the order and marks it PRINTED", async () => {
     const repo = new FakeDashboardOrderRepository();
     repo.seed(makeOrderRecord({ id: "1" }));
     const storeRepo = new FakeStoreRepository();
-    const createLabelFn = vi.fn().mockResolvedValue({
-      label: "base64-label",
-      trackingLink: "https://track.gls/1",
-      unitTrackingLink: "https://track.gls/unit-1",
-      transactionId: "txn-1",
-      unitNo: "11850080202728",
-    });
 
-    const result = await printOrder(repo, storeRepo, "1", createLabelFn);
+    const result = await printOrder(repo, storeRepo, "1");
 
-    expect(result).toEqual({ label: "base64-label", trackingLink: "https://track.gls/1" });
+    expect(result.csv).toContain("Jan Peeters");
+    expect(result.csv).toContain("11850079");
     const updated = await repo.get("1");
     expect(updated?.status).toBe("PRINTED");
-    expect(createLabelFn).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "Jan Peeters", reference: "#1001" }),
-      "pdf",
-      "11850079",
-    );
-    expect(mockedFulfillOrder).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "store-1", type: "SHOPIFY" }),
-      "1001",
-      "11850080202728",
-    );
+    expect(updated?.label).toBe("");
+    expect(updated?.trackingLink).toBe("");
   });
 
-  it("still marks the order PRINTED even if the fulfillment write-back fails", async () => {
+  it("throws when the order doesn't exist", async () => {
     const repo = new FakeDashboardOrderRepository();
-    repo.seed(makeOrderRecord({ id: "1" }));
     const storeRepo = new FakeStoreRepository();
-    mockedFulfillOrder.mockRejectedValueOnce(new Error("Shopify unavailable"));
-    const createLabelFn = vi.fn().mockResolvedValue({
-      label: "base64-label",
-      trackingLink: "https://track.gls/1",
-      unitTrackingLink: "https://track.gls/unit-1",
-      transactionId: "txn-1",
-      unitNo: "11850080202728",
-    });
 
-    const result = await printOrder(repo, storeRepo, "1", createLabelFn);
-
-    expect(result.label).toBe("base64-label");
-    const updated = await repo.get("1");
-    expect(updated?.status).toBe("PRINTED");
+    await expect(printOrder(repo, storeRepo, "missing")).rejects.toThrow("missing");
   });
 
-  it("marks the order ERROR and rethrows on failure", async () => {
+  it("throws when the order's store doesn't exist", async () => {
     const repo = new FakeDashboardOrderRepository();
-    repo.seed(makeOrderRecord({ id: "1" }));
+    repo.seed(makeOrderRecord({ id: "1", storeId: "missing-store" }));
     const storeRepo = new FakeStoreRepository();
-    const createLabelFn = vi.fn().mockRejectedValue(new GlsApiError("Ongeldige postcode", 422));
 
-    await expect(printOrder(repo, storeRepo, "1", createLabelFn)).rejects.toThrow("Ongeldige postcode");
+    await expect(printOrder(repo, storeRepo, "1")).rejects.toThrow("missing-store");
+  });
+});
 
-    const updated = await repo.get("1");
-    expect(updated?.status).toBe("ERROR");
-    expect(updated?.reviewReason).toBe("Ongeldige postcode");
-    expect(mockedFulfillOrder).not.toHaveBeenCalled();
+describe("exportOrders", () => {
+  it("builds one combined CSV for every order and marks them all PRINTED", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(makeOrderRecord({ id: "1", name: "Jan Peeters" }));
+    repo.seed(makeOrderRecord({ id: "2", name: "Marie Dubois" }));
+    const storeRepo = new FakeStoreRepository();
+
+    const result = await exportOrders(repo, storeRepo, ["1", "2"]);
+
+    expect(result.failed).toEqual([]);
+    expect(result.csv).toContain("Jan Peeters");
+    expect(result.csv).toContain("Marie Dubois");
+    expect((await repo.get("1"))?.status).toBe("PRINTED");
+    expect((await repo.get("2"))?.status).toBe("PRINTED");
+  });
+
+  it("skips orders that fail and still exports the rest", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(makeOrderRecord({ id: "1", name: "Jan Peeters" }));
+    const storeRepo = new FakeStoreRepository();
+
+    const result = await exportOrders(repo, storeRepo, ["1", "missing"]);
+
+    expect(result.failed).toEqual(["missing"]);
+    expect(result.csv).toContain("Jan Peeters");
   });
 });
 

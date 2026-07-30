@@ -1,5 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
-import { GlsApiError } from "../../../../lib/gls/errors";
+import { describe, expect, it } from "vitest";
 import type {
   DashboardOrderRepository,
   OrderFilter,
@@ -7,11 +6,13 @@ import type {
   StoreRecord,
   StoreRepository,
 } from "../../../../lib/dashboard/types";
-import { handleClearOrders, handleListOrders, handlePrintOrder, handleReviewOrder } from "../shared";
-
-vi.mock("../../../../lib/ingest/fulfill", () => ({
-  fulfillOrder: vi.fn().mockResolvedValue(undefined),
-}));
+import {
+  handleClearOrders,
+  handleExportOrders,
+  handleListOrders,
+  handlePrintOrder,
+  handleReviewOrder,
+} from "../shared";
 
 function makeOrderRecord(overrides: Partial<OrderRecord> = {}): OrderRecord {
   return {
@@ -87,8 +88,22 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
   }
 }
 
+const store: StoreRecord = {
+  id: "store-1",
+  type: "SHOPIFY",
+  name: "Revitalash",
+  automationEnabled: false,
+  customerNo: "11850079",
+  defaultWeightKg: 1.5,
+  shopDomain: "revitalash.myshopify.com",
+  shopifyAccessToken: "shpat_test",
+  siteUrl: null,
+  wooConsumerKey: null,
+  wooConsumerSecret: null,
+};
+
 class FakeStoreRepository implements StoreRepository {
-  constructor(private stores: StoreRecord[] = []) {}
+  constructor(private stores: StoreRecord[] = [store]) {}
 
   async list(): Promise<StoreRecord[]> {
     return this.stores;
@@ -151,36 +166,68 @@ describe("handleReviewOrder", () => {
 });
 
 describe("handlePrintOrder", () => {
-  it("returns the label on success", async () => {
+  it("returns a CSV file and marks the order PRINTED", async () => {
     const repo = new FakeDashboardOrderRepository();
     repo.seed(makeOrderRecord({ id: "1" }));
     const storeRepo = new FakeStoreRepository();
-    const createLabelFn = vi.fn().mockResolvedValue({
-      label: "base64-label",
-      trackingLink: "https://track.gls/1",
-      unitTrackingLink: "https://track.gls/unit-1",
-      transactionId: "txn-1",
-      unitNo: "11850080202728",
-    });
 
-    const response = await handlePrintOrder(repo, storeRepo, "1", createLabelFn);
-    const body = (await response.json()) as { label: string; trackingLink: string };
+    const response = await handlePrintOrder(repo, storeRepo, "1");
+    const body = await response.text();
 
     expect(response.status).toBe(200);
-    expect(body.label).toBe("base64-label");
+    expect(response.headers.get("Content-Type")).toBe("text/csv");
+    expect(body).toContain("Jan Peeters");
+    expect(body).toContain("11850079");
+    expect((await repo.get("1"))?.status).toBe("PRINTED");
   });
 
-  it("returns a 502 with the GLS error message on failure", async () => {
+  it("returns a 500 when the order doesn't exist", async () => {
     const repo = new FakeDashboardOrderRepository();
-    repo.seed(makeOrderRecord({ id: "1" }));
     const storeRepo = new FakeStoreRepository();
-    const createLabelFn = vi.fn().mockRejectedValue(new GlsApiError("Ongeldige postcode", 422));
 
-    const response = await handlePrintOrder(repo, storeRepo, "1", createLabelFn);
+    const response = await handlePrintOrder(repo, storeRepo, "missing");
     const body = (await response.json()) as { error: string };
 
-    expect(response.status).toBe(502);
-    expect(body.error).toBe("Ongeldige postcode");
+    expect(response.status).toBe(500);
+    expect(body.error).toContain("missing");
+  });
+});
+
+describe("handleExportOrders", () => {
+  it("returns a combined CSV for every requested order and marks them PRINTED", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(makeOrderRecord({ id: "1", name: "Jan Peeters" }));
+    repo.seed(makeOrderRecord({ id: "2", name: "Marie Dubois" }));
+    const storeRepo = new FakeStoreRepository();
+
+    const request = new Request("https://example.com/api/orders/export-csv", {
+      method: "POST",
+      body: JSON.stringify({ ids: ["1", "2"] }),
+    });
+    const response = await handleExportOrders(request, repo, storeRepo);
+    const body = await response.text();
+
+    expect(response.headers.get("X-Failed-Ids")).toBe("");
+    expect(body).toContain("Jan Peeters");
+    expect(body).toContain("Marie Dubois");
+    expect((await repo.get("1"))?.status).toBe("PRINTED");
+    expect((await repo.get("2"))?.status).toBe("PRINTED");
+  });
+
+  it("skips orders that fail and reports them in X-Failed-Ids", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(makeOrderRecord({ id: "1", name: "Jan Peeters" }));
+    const storeRepo = new FakeStoreRepository();
+
+    const request = new Request("https://example.com/api/orders/export-csv", {
+      method: "POST",
+      body: JSON.stringify({ ids: ["1", "missing"] }),
+    });
+    const response = await handleExportOrders(request, repo, storeRepo);
+    const body = await response.text();
+
+    expect(response.headers.get("X-Failed-Ids")).toBe("missing");
+    expect(body).toContain("Jan Peeters");
   });
 });
 

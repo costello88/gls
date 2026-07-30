@@ -1,10 +1,10 @@
 import { PrismaOrderRepository } from "../../../../lib/repositories/orderRepository";
 import { PrismaStoreRepository } from "../../../../lib/repositories/storeRepository";
-import { handleCronSync } from "./shared";
+import { handleExportOrders } from "../shared";
 
+const repository = new PrismaOrderRepository();
 const storeRepository = new PrismaStoreRepository();
-const orderRepository = new PrismaOrderRepository();
 
-export async function GET(request: Request): Promise<Response> {
-  return handleCronSync(request, storeRepository, orderRepository);
+export async function POST(request: Request): Promise<Response> {
+  return handleExportOrders(request, repository, storeRepository);
 }

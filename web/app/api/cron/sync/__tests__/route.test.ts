@@ -22,7 +22,7 @@ describe("handleCronSync", () => {
       headers: { Authorization: "Bearer wrong" },
     });
 
-    const response = await handleCronSync(request, {} as any, {} as any, vi.fn());
+    const response = await handleCronSync(request, {} as any, {} as any);
 
     expect(response.status).toBe(401);
     expect(mockedRunAutomatedSync).not.toHaveBeenCalled();
@@ -31,13 +31,13 @@ describe("handleCronSync", () => {
   it("runs automation and returns results when the secret matches", async () => {
     process.env.CRON_SECRET = "test-secret";
     mockedRunAutomatedSync.mockResolvedValue([
-      { storeId: "store-1", sync: { new: 1, valid: 1, invalid: 0 }, printed: 1, failed: 0 },
+      { storeId: "store-1", sync: { new: 1, valid: 1, invalid: 0 } },
     ]);
     const request = new Request("https://example.com/api/cron/sync", {
       headers: { Authorization: "Bearer test-secret" },
     });
 
-    const response = await handleCronSync(request, {} as any, {} as any, vi.fn());
+    const response = await handleCronSync(request, {} as any, {} as any);
     const body = (await response.json()) as { results: unknown[] };
 
     expect(response.status).toBe(200);

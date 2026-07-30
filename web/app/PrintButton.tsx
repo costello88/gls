@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export function PrintButton({
   orderId,
-  label = "Printen",
+  label = "Download CSV",
   confirmMessage,
 }: {
   orderId: string;
@@ -23,22 +23,22 @@ export function PrintButton({
     setError(null);
     setLoading(true);
     const response = await fetch(`/api/orders/${orderId}/print`, { method: "POST" });
-    const body = (await response.json()) as { label?: string; error?: string; details?: unknown };
     setLoading(false);
 
-    if (!response.ok || !body.label) {
-      const details = body.details ? ` (${JSON.stringify(body.details)})` : "";
-      setError((body.error ?? "Printen mislukt") + details);
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      setError(body?.error ?? "Exporteren mislukt");
       return;
     }
 
-    const byteCharacters = atob(body.label);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const blob = new Blob([new Uint8Array(byteNumbers)], { type: "application/pdf" });
-    window.open(URL.createObjectURL(blob), "_blank");
+    const csv = await response.text();
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `gls-import-${orderId}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
     router.refresh();
   }
 

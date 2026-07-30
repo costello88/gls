@@ -99,16 +99,12 @@ export default async function DashboardPage({
                   {(order.status === "PENDING" || order.status === "ERROR") && (
                     <PrintButton orderId={order.id} />
                   )}
-                  {order.status === "PRINTED" && order.label && (
+                  {order.status === "PRINTED" && (
                     <span className="inline-flex items-center gap-3">
-                      <ViewLabelButton label={order.label} />
-                      <ConfirmLabelButton orderId={order.id} />
-                      <DeleteLabelButton orderId={order.id} />
-                      <PrintButton
-                        orderId={order.id}
-                        label="Print opnieuw"
-                        confirmMessage="Dit maakt een NIEUWE zending bij GLS aan. Weet je zeker dat je dit label opnieuw wilt printen?"
-                      />
+                      {order.label && <ViewLabelButton label={order.label} />}
+                      {order.label && <ConfirmLabelButton orderId={order.id} />}
+                      {order.label && <DeleteLabelButton orderId={order.id} />}
+                      <PrintButton orderId={order.id} label="Download CSV opnieuw" />
                     </span>
                   )}
                 </td>

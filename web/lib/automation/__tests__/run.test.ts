@@ -133,7 +133,7 @@ const manualStore: StoreRecord = {
 };
 
 describe("runAutomatedSync", () => {
-  it("syncs every store and only auto-prints for automation-enabled stores", async () => {
+  it("syncs every store and reports the sync result per store", async () => {
     mockedSyncStore.mockResolvedValue({ new: 1, valid: 1, invalid: 0 });
 
     const storeRepo = new FakeStoreRepository([automatedStore, manualStore]);
@@ -141,39 +141,15 @@ describe("runAutomatedSync", () => {
     orderRepo.seed(makeOrderRecord({ id: "auto-order", storeId: "store-1", status: "PENDING" }));
     orderRepo.seed(makeOrderRecord({ id: "manual-order", storeId: "store-2", status: "PENDING" }));
 
-    const createLabelFn = vi.fn().mockResolvedValue({
-      label: "base64-label",
-      trackingLink: "https://track.gls/1",
-      unitTrackingLink: "https://track.gls/unit-1",
-      transactionId: "txn-1",
-    });
-
-    const results = await runAutomatedSync(storeRepo, orderRepo, createLabelFn);
+    const results = await runAutomatedSync(storeRepo, orderRepo);
 
     expect(mockedSyncStore).toHaveBeenCalledTimes(2);
-    expect(createLabelFn).toHaveBeenCalledTimes(1);
-
-    const autoResult = results.find((r) => r.storeId === "store-1");
-    expect(autoResult?.printed).toBe(1);
-    expect(autoResult?.failed).toBe(0);
-    expect((await orderRepo.get("auto-order"))?.status).toBe("PRINTED");
+    expect(results.map((r) => r.storeId)).toEqual(["store-1", "store-2"]);
+    expect(results.every((r) => r.sync.new === 1)).toBe(true);
+    // Automation no longer auto-prints -- there is no API that registers a
+    // shipment into GLS Print&Ship, so printing always requires a manual
+    // CSV export/import step. Orders stay PENDING until a person prints them.
+    expect((await orderRepo.get("auto-order"))?.status).toBe("PENDING");
     expect((await orderRepo.get("manual-order"))?.status).toBe("PENDING");
-  });
-
-  it("counts failed auto-prints and leaves the order in ERROR for the next cycle to retry", async () => {
-    mockedSyncStore.mockResolvedValue({ new: 0, valid: 0, invalid: 0 });
-
-    const storeRepo = new FakeStoreRepository([automatedStore]);
-    const orderRepo = new FakeAutomationOrderRepository();
-    orderRepo.seed(makeOrderRecord({ id: "failing-order", storeId: "store-1", status: "ERROR" }));
-
-    const createLabelFn = vi.fn().mockRejectedValue(new Error("GLS unavailable"));
-
-    const results = await runAutomatedSync(storeRepo, orderRepo, createLabelFn);
-
-    const result = results.find((r) => r.storeId === "store-1");
-    expect(result?.printed).toBe(0);
-    expect(result?.failed).toBe(1);
-    expect((await orderRepo.get("failing-order"))?.status).toBe("ERROR");
   });
 });

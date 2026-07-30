@@ -1,6 +1,4 @@
-import { fulfillOrder } from "../ingest/fulfill";
-import { toStoreConfig } from "./storeConfig";
-import type { CreateLabelResult, LabelType, NormalizedShipment } from "../gls/types";
+import { buildGlsImportCsv } from "../gls/importCsv";
 import type {
   DashboardOrderRepository,
   OrderEdits,
@@ -8,12 +6,6 @@ import type {
   OrderRecord,
   StoreRepository,
 } from "./types";
-
-export type CreateLabelFn = (
-  shipment: NormalizedShipment,
-  labelType: LabelType,
-  customerNo: string,
-) => Promise<CreateLabelResult>;
 
 export async function listOrders(
   repo: DashboardOrderRepository,
@@ -43,49 +35,48 @@ export async function printOrder(
   repo: DashboardOrderRepository,
   storeRepo: StoreRepository,
   id: string,
-  createLabelFn: CreateLabelFn,
-): Promise<{ label: string; trackingLink: string }> {
+): Promise<{ csv: string }> {
   const order = await repo.get(id);
   if (!order) {
     throw new Error(`Order ${id} not found`);
   }
 
-  try {
-    const result = await createLabelFn(
-      {
-        name: order.name,
-        street: order.street,
-        houseNo: order.houseNo,
-        zipCode: order.zipCode,
-        city: order.city,
-        countryCode: order.countryCode as "BE" | "NL" | "LU",
-        phone: order.phone,
-        email: order.email,
-        weightKg: order.weightKg,
-        reference: order.orderNumber,
-      },
-      "pdf",
-      order.customerNo,
-    );
-
-    await repo.markPrinted(id, result.label, result.trackingLink);
-
-    const store = await storeRepo.get(order.storeId);
-    if (store) {
-      try {
-        await fulfillOrder(toStoreConfig(store), order.sourceOrderId, result.unitNo);
-      } catch {
-        // Non-fatal: the label already exists at GLS. Failing to notify the
-        // store must not revert the order to a retryable/printable state --
-        // that would create a duplicate shipment on the next print attempt.
-      }
-    }
-
-    return { label: result.label, trackingLink: result.trackingLink };
-  } catch (err) {
-    await repo.markError(id, (err as Error).message);
-    throw err;
+  const store = await storeRepo.get(order.storeId);
+  if (!store) {
+    throw new Error(`Store ${order.storeId} not found`);
   }
+
+  const csv = buildGlsImportCsv([{ ...order, senderNumber: store.customerNo }]);
+  await repo.markPrinted(id, "", "");
+  return { csv };
+}
+
+export async function exportOrders(
+  repo: DashboardOrderRepository,
+  storeRepo: StoreRepository,
+  ids: string[],
+): Promise<{ csv: string; failed: string[] }> {
+  const rows: Parameters<typeof buildGlsImportCsv>[0] = [];
+  const failed: string[] = [];
+
+  for (const id of ids) {
+    try {
+      const order = await repo.get(id);
+      if (!order) {
+        throw new Error(`Order ${id} not found`);
+      }
+      const store = await storeRepo.get(order.storeId);
+      if (!store) {
+        throw new Error(`Store ${order.storeId} not found`);
+      }
+      rows.push({ ...order, senderNumber: store.customerNo });
+      await repo.markPrinted(id, "", "");
+    } catch {
+      failed.push(id);
+    }
+  }
+
+  return { csv: buildGlsImportCsv(rows), failed };
 }
 
 export async function clearOrders(repo: DashboardOrderRepository): Promise<void> {
