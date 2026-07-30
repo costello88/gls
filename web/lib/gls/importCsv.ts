@@ -47,7 +47,7 @@ function buildRow(row: GlsImportRow): string[] {
     row.senderNumber,
     "1",
     "1",
-    "Parcel",
+    "PCO",
     row.orderNumber,
   ];
 }

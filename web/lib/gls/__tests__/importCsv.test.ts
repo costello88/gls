@@ -26,7 +26,7 @@ describe("buildGlsImportCsv", () => {
       "Name,Street,HouseNo,PostalCode,City,Country,Phone,Email,SenderNumber,Weight,Colli,PackagingCode,Reference",
     );
     expect(lines[1]).toBe(
-      "Jan Peeters,Kerkstraat,12A,2000,Antwerpen,BE,+32470123456,jan@voorbeeld.be,11850079,1,1,Parcel,#1042",
+      "Jan Peeters,Kerkstraat,12A,2000,Antwerpen,BE,+32470123456,jan@voorbeeld.be,11850079,1,1,PCO,#1042",
     );
   });
 
