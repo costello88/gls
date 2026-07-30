@@ -51,6 +51,13 @@ describe("splitAddress", () => {
     });
   });
 
+  it("drops a city name typed onto the end of address1 after the house number", () => {
+    expect(splitAddress("Zandstraat 29A Hasselt")).toEqual({
+      street: "Zandstraat",
+      houseNo: "29A",
+    });
+  });
+
   it("is unaffected by an empty address2", () => {
     expect(splitAddress("Kerkstraat 12", "")).toEqual({ street: "Kerkstraat", houseNo: "12" });
     expect(splitAddress("Kerkstraat 12")).toEqual({ street: "Kerkstraat", houseNo: "12" });
