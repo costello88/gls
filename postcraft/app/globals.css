@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@theme {
+  /* Postcraft design tokens — ink & signal */
+  --color-ink: #0a0a0c;
+  --color-ink-2: #101014;
+  --color-ink-3: #16161c;
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-2: rgba(255, 255, 255, 0.14);
+  --color-paper: #f4f1ea;
+  --color-paper-dim: #a8a49b;
+  --color-muted: #6e6a63;
+  --color-accent: #ff4d1c;
+  --color-accent-soft: rgba(255, 77, 28, 0.12);
+  --color-lime: #d8f34e;
+  --color-lime-soft: rgba(216, 243, 78, 0.12);
+  --color-danger: #ff5d5d;
+  --color-warn: #ffb020;
+  --color-ig-start: #f9ce34;
+  --color-ig-mid: #ee2a7b;
+  --color-ig-end: #6228d7;
+
+  --font-display: var(--font-fraunces), "Georgia", serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  --radius-card: 14px;
+
+  --animate-rise: rise 0.25s ease-out both;
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-ink);
+}
+
+/* Micro-label: uppercase tracked-out captions used across the app */
+.microlabel {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-paper-dim);
+  font-weight: 500;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 560;
+  letter-spacing: -0.01em;
+}
+
+.stat-number {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.hairline {
+  border: 1px solid var(--color-line);
+}
+
+.card {
+  background: var(--color-ink-2);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+
+.card-hover {
+  transition:
+    border-color 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+.card-hover:hover {
+  border-color: var(--color-line-2);
+}
+
+/* Grain for empty states */
+.grain {
+  position: relative;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Instagram gradient ring for account avatars */
+.ig-ring {
+  background: conic-gradient(
+    from 210deg,
+    var(--color-ig-start),
+    var(--color-ig-mid),
+    var(--color-ig-end),
+    var(--color-ig-start)
+  );
+}
+
+/* Thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}

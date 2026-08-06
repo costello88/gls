@@ -1,0 +1,35 @@
+{
+  "name": "postcraft",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-powered Instagram content production & posting machine",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.0",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.474.0",
+    "next": "^15.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "satori": "^0.29.0",
+    "sharp": "^0.34.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
