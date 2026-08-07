@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.fbcdn.net" },
     ],
   },
-  serverExternalPackages: ["sharp"],
+  serverExternalPackages: ["sharp", "@resvg/resvg-js"],
 };
 
 export default nextConfig;
