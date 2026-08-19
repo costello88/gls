@@ -19,6 +19,17 @@ const TABS: { label: string; status: OrderRecordStatus }[] = [
   { label: "Fout", status: "ERROR" },
 ];
 
+const TAB_HELP: Record<OrderRecordStatus, string> = {
+  PENDING: "Deze bestellingen kun je downloaden als CSV en importeren in GLS Print&Ship.",
+  NEEDS_REVIEW:
+    "Er ontbreekt iets of er klopt iets niet (bijv. e-mailadres). Klik op \"Bekijken\" om te verbeteren.",
+  READY: "",
+  PRINTED:
+    "De CSV is gedownload. Nog niet klaar om te versturen -- importeer het bestand in GLS Print&Ship en klik daar op \"Bevestig zendingen\" + \"Download dagrapport\".",
+  ERROR: "Hier ging iets mis bij het downloaden. Probeer het opnieuw of vraag hulp.",
+  IGNORED: "",
+};
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -35,7 +46,7 @@ export default async function DashboardPage({
 
   return (
     <AppShell>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-2">
           {TABS.map((tab) => (
             <Link
@@ -64,6 +75,15 @@ export default async function DashboardPage({
           )}
         </div>
       </div>
+
+      {TAB_HELP[activeStatus] && (
+        <p className="mb-6 text-sm text-slate-500">
+          {TAB_HELP[activeStatus]}{" "}
+          <Link href="/hulp" className="font-medium text-blue-600 hover:underline">
+            Meer uitleg
+          </Link>
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
