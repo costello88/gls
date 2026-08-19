@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clearOrders, exportOrders, listOrders, printOrder, reviewOrder } from "../orders";
+import { cleanupOldOrders, clearOrders, exportOrders, listOrders, printOrder, reviewOrder } from "../orders";
 import type {
   DashboardOrderRepository,
   OrderEdits,
@@ -35,9 +35,14 @@ function makeOrderRecord(overrides: Partial<OrderRecord> = {}): OrderRecord {
 
 class FakeDashboardOrderRepository implements DashboardOrderRepository {
   private orders = new Map<string, OrderRecord>();
+  private printedAt = new Map<string, Date>();
 
   seed(order: OrderRecord) {
     this.orders.set(order.id, order);
+  }
+
+  seedPrintedAt(id: string, date: Date) {
+    this.printedAt.set(id, date);
   }
 
   async exists(): Promise<boolean> {
@@ -67,6 +72,7 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
   }
 
   async markPrinted(id: string, label: string, trackingLink: string): Promise<OrderRecord> {
+    this.printedAt.set(id, new Date());
     return this.update(id, { status: "PRINTED", label, trackingLink });
   }
 
@@ -80,6 +86,19 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
 
   async deleteAll(): Promise<void> {
     this.orders.clear();
+  }
+
+  async deletePrintedBefore(cutoff: Date): Promise<number> {
+    let count = 0;
+    for (const [id, order] of this.orders) {
+      if (order.status !== "PRINTED") continue;
+      const printedTime = this.printedAt.get(id) ?? new Date(0);
+      if (printedTime < cutoff) {
+        this.orders.delete(id);
+        count += 1;
+      }
+    }
+    return count;
   }
 }
 
@@ -258,5 +277,24 @@ describe("clearOrders", () => {
     await clearOrders(repo);
 
     expect(await listOrders(repo, {})).toHaveLength(0);
+  });
+});
+
+describe("cleanupOldOrders", () => {
+  it("deletes printed orders older than a day and leaves everything else", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    repo.seed(makeOrderRecord({ id: "old-printed", status: "PRINTED" }));
+    repo.seedPrintedAt("old-printed", twoDaysAgo);
+    repo.seed(makeOrderRecord({ id: "recent-printed", status: "PRINTED" }));
+    repo.seedPrintedAt("recent-printed", new Date());
+    repo.seed(makeOrderRecord({ id: "pending", status: "PENDING" }));
+
+    const deleted = await cleanupOldOrders(repo);
+
+    expect(deleted).toBe(1);
+    expect(await repo.get("old-printed")).toBeNull();
+    expect(await repo.get("recent-printed")).not.toBeNull();
+    expect(await repo.get("pending")).not.toBeNull();
   });
 });

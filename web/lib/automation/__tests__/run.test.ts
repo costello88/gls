@@ -60,9 +60,14 @@ function makeOrderRecord(overrides: Partial<OrderRecord> = {}): OrderRecord {
 
 class FakeAutomationOrderRepository implements DashboardOrderRepository {
   private orders = new Map<string, OrderRecord>();
+  private printedAt = new Map<string, Date>();
 
   seed(order: OrderRecord) {
     this.orders.set(order.id, order);
+  }
+
+  seedPrintedAt(id: string, date: Date) {
+    this.printedAt.set(id, date);
   }
 
   async exists(): Promise<boolean> {
@@ -92,6 +97,7 @@ class FakeAutomationOrderRepository implements DashboardOrderRepository {
   }
 
   async markPrinted(id: string, label: string, trackingLink: string): Promise<OrderRecord> {
+    this.printedAt.set(id, new Date());
     return this.update(id, { status: "PRINTED", label, trackingLink });
   }
 
@@ -108,6 +114,19 @@ class FakeAutomationOrderRepository implements DashboardOrderRepository {
 
   async deleteAll(): Promise<void> {
     this.orders.clear();
+  }
+
+  async deletePrintedBefore(cutoff: Date): Promise<number> {
+    let count = 0;
+    for (const [id, order] of this.orders) {
+      if (order.status !== "PRINTED") continue;
+      const printedTime = this.printedAt.get(id) ?? new Date(0);
+      if (printedTime < cutoff) {
+        this.orders.delete(id);
+        count += 1;
+      }
+    }
+    return count;
   }
 }
 
@@ -134,22 +153,36 @@ const manualStore: StoreRecord = {
 
 describe("runAutomatedSync", () => {
   it("syncs every store and reports the sync result per store", async () => {
-    mockedSyncStore.mockResolvedValue({ new: 1, valid: 1, invalid: 0 });
+    mockedSyncStore.mockResolvedValue({ new: 1, valid: 1, invalid: 0, ignored: 0 });
 
     const storeRepo = new FakeStoreRepository([automatedStore, manualStore]);
     const orderRepo = new FakeAutomationOrderRepository();
     orderRepo.seed(makeOrderRecord({ id: "auto-order", storeId: "store-1", status: "PENDING" }));
     orderRepo.seed(makeOrderRecord({ id: "manual-order", storeId: "store-2", status: "PENDING" }));
 
-    const results = await runAutomatedSync(storeRepo, orderRepo);
+    const result = await runAutomatedSync(storeRepo, orderRepo);
 
     expect(mockedSyncStore).toHaveBeenCalledTimes(2);
-    expect(results.map((r) => r.storeId)).toEqual(["store-1", "store-2"]);
-    expect(results.every((r) => r.sync.new === 1)).toBe(true);
+    expect(result.stores.map((r) => r.storeId)).toEqual(["store-1", "store-2"]);
+    expect(result.stores.every((r) => r.sync.new === 1)).toBe(true);
     // Automation no longer auto-prints -- there is no API that registers a
     // shipment into GLS Print&Ship, so printing always requires a manual
     // CSV export/import step. Orders stay PENDING until a person prints them.
     expect((await orderRepo.get("auto-order"))?.status).toBe("PENDING");
     expect((await orderRepo.get("manual-order"))?.status).toBe("PENDING");
+  });
+
+  it("also cleans up printed orders older than a day", async () => {
+    mockedSyncStore.mockResolvedValue({ new: 0, valid: 0, invalid: 0, ignored: 0 });
+
+    const storeRepo = new FakeStoreRepository([automatedStore]);
+    const orderRepo = new FakeAutomationOrderRepository();
+    orderRepo.seed(makeOrderRecord({ id: "old-printed", storeId: "store-1", status: "PRINTED" }));
+    orderRepo.seedPrintedAt("old-printed", new Date(Date.now() - 2 * 24 * 60 * 60 * 1000));
+
+    const result = await runAutomatedSync(storeRepo, orderRepo);
+
+    expect(result.deletedOldOrders).toBe(1);
+    expect(await orderRepo.get("old-printed")).toBeNull();
   });
 });

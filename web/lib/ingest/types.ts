@@ -15,6 +15,7 @@ export interface SyncResult {
   new: number;
   valid: number;
   invalid: number;
+  ignored: number;
   error?: string;
 }
 

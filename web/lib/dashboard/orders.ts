@@ -82,3 +82,13 @@ export async function exportOrders(
 export async function clearOrders(repo: DashboardOrderRepository): Promise<void> {
   await repo.deleteAll();
 }
+
+const PRINTED_ORDER_RETENTION_DAYS = 1;
+
+// Printed orders are only ever needed again to re-download their CSV, so
+// they're removed a day after printing -- otherwise they'd keep piling up
+// in the "Geprint" tab every day the CSV isn't imported into GLS.
+export async function cleanupOldOrders(repo: DashboardOrderRepository): Promise<number> {
+  const cutoff = new Date(Date.now() - PRINTED_ORDER_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  return repo.deletePrintedBefore(cutoff);
+}

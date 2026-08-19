@@ -50,14 +50,14 @@ const store1: StoreRecord = {
 
 describe("handleSync", () => {
   it("syncs every store and returns per-store results", async () => {
-    mockedSyncStore.mockResolvedValue({ new: 2, valid: 1, invalid: 1 });
+    mockedSyncStore.mockResolvedValue({ new: 2, valid: 1, invalid: 1, ignored: 0 });
     const storeRepo = new FakeStoreRepository([store1]);
 
     const response = await handleSync(storeRepo, {} as any);
     const body = (await response.json()) as { results: Record<string, unknown> };
 
     expect(response.status).toBe(200);
-    expect(body.results["store-1"]).toEqual({ new: 2, valid: 1, invalid: 1 });
+    expect(body.results["store-1"]).toEqual({ new: 2, valid: 1, invalid: 1, ignored: 0 });
     expect(mockedSyncStore).toHaveBeenCalledTimes(1);
   });
 });

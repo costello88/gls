@@ -12,6 +12,6 @@ export async function handleCronSync(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const results = await runAutomatedSync(storeRepo, orderRepo);
-  return NextResponse.json({ results });
+  const result = await runAutomatedSync(storeRepo, orderRepo);
+  return NextResponse.json(result);
 }

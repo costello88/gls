@@ -30,17 +30,19 @@ describe("handleCronSync", () => {
 
   it("runs automation and returns results when the secret matches", async () => {
     process.env.CRON_SECRET = "test-secret";
-    mockedRunAutomatedSync.mockResolvedValue([
-      { storeId: "store-1", sync: { new: 1, valid: 1, invalid: 0 } },
-    ]);
+    mockedRunAutomatedSync.mockResolvedValue({
+      stores: [{ storeId: "store-1", sync: { new: 1, valid: 1, invalid: 0, ignored: 0 } }],
+      deletedOldOrders: 2,
+    });
     const request = new Request("https://example.com/api/cron/sync", {
       headers: { Authorization: "Bearer test-secret" },
     });
 
     const response = await handleCronSync(request, {} as any, {} as any);
-    const body = (await response.json()) as { results: unknown[] };
+    const body = (await response.json()) as { stores: unknown[]; deletedOldOrders: number };
 
     expect(response.status).toBe(200);
-    expect(body.results).toHaveLength(1);
+    expect(body.stores).toHaveLength(1);
+    expect(body.deletedOldOrders).toBe(2);
   });
 });

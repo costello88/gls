@@ -46,7 +46,7 @@ describe("syncStore", () => {
     const repository = new FakeOrderRepository();
     const result = await syncStore(shopifyStore, repository);
 
-    expect(result).toEqual({ new: 1, valid: 1, invalid: 0 });
+    expect(result).toEqual({ new: 1, valid: 1, invalid: 0, ignored: 0 });
     expect(repository.created).toHaveLength(1);
     expect(repository.created[0]).toMatchObject({
       storeId: "store-1",
@@ -70,7 +70,7 @@ describe("syncStore", () => {
     const repository = new FakeOrderRepository();
     const result = await syncStore(shopifyStore, repository);
 
-    expect(result).toEqual({ new: 1, valid: 0, invalid: 1 });
+    expect(result).toEqual({ new: 1, valid: 0, invalid: 1, ignored: 0 });
     expect(repository.created[0].status).toBe("NEEDS_REVIEW");
     expect(repository.created[0].reviewReason).toContain("Email");
   });
@@ -87,7 +87,7 @@ describe("syncStore", () => {
 
     const result = await syncStore(shopifyStore, repository);
 
-    expect(result).toEqual({ new: 0, valid: 0, invalid: 0 });
+    expect(result).toEqual({ new: 0, valid: 0, invalid: 0, ignored: 0 });
     expect(repository.created).toHaveLength(0);
   });
 
@@ -97,7 +97,25 @@ describe("syncStore", () => {
     const repository = new FakeOrderRepository();
     const result = await syncStore(shopifyStore, repository);
 
-    expect(result).toEqual({ new: 0, valid: 0, invalid: 0, error: "network down" });
+    expect(result).toEqual({ new: 0, valid: 0, invalid: 0, ignored: 0, error: "network down" });
     expect(repository.created).toHaveLength(0);
+  });
+
+  it("ignores a known test order (silvester jensch) instead of importing it as a real order", async () => {
+    const order = makeRawShopifyOrder({ id: 4, name: "#4" });
+    order.shipping_address = { ...order.shipping_address, name: "Silvester Jensch" };
+    global.fetch = vi.fn().mockResolvedValue({
+      headers: new Headers(),
+      json: async () => ({ orders: [order] }),
+    }) as unknown as typeof fetch;
+
+    const repository = new FakeOrderRepository();
+    const result = await syncStore(shopifyStore, repository);
+
+    expect(result).toEqual({ new: 1, valid: 0, invalid: 0, ignored: 1 });
+    expect(repository.created[0]).toMatchObject({
+      status: "IGNORED",
+      reviewReason: "Testbestelling - automatisch genegeerd",
+    });
   });
 });
