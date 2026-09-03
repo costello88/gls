@@ -97,6 +97,58 @@ export default function HulpPage() {
           </div>
         </dl>
       </div>
+
+      <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+        <h2 className="font-semibold text-slate-900">Als app op je telefoon of computer zetten</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Dan hoef je niet steeds de website op te zoeken -- je klikt gewoon op het icoontje, net als bij
+          een gewone app.
+        </p>
+
+        <div className="mt-6 space-y-6">
+          <div>
+            <h3 className="font-semibold text-slate-900">Op een iPhone of iPad (Safari)</h3>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600">
+              <li>Open deze website in Safari (niet Chrome).</li>
+              <li>
+                Tik onderin op het deel-icoontje: een vierkantje met een pijltje naar boven (
+                <span aria-hidden="true">⬆️</span>).
+              </li>
+              <li>Scrol in het menu dat verschijnt naar beneden en tik op &quot;Zet op beginscherm&quot;.</li>
+              <li>Tik rechtsboven op &quot;Voeg toe&quot;.</li>
+            </ol>
+            <p className="mt-2 text-sm text-slate-500">
+              Er verschijnt nu een geel &quot;GLS&quot;-icoontje op je beginscherm.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-slate-900">Op een Android-telefoon (Chrome)</h3>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600">
+              <li>Open deze website in Chrome.</li>
+              <li>Tik rechtsboven op de drie puntjes (⋮).</li>
+              <li>Tik op &quot;App installeren&quot; of &quot;Toevoegen aan startscherm&quot;.</li>
+              <li>Bevestig door op &quot;Installeren&quot; te tikken.</li>
+            </ol>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-slate-900">Op een computer (Chrome of Edge)</h3>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600">
+              <li>Open deze website.</li>
+              <li>
+                Kijk helemaal rechts in de adresbalk (waar de website-naam staat) naar een klein
+                icoontje met een scherm en een pijltje naar beneden.
+              </li>
+              <li>Klik erop en kies &quot;Installeren&quot;.</li>
+            </ol>
+            <p className="mt-2 text-sm text-slate-500">
+              Zie je dat icoontje niet? Klik dan rechtsboven op de drie puntjes (⋮) en kies &quot;GLS
+              Sync installeren...&quot;.
+            </p>
+          </div>
+        </div>
+      </div>
     </AppShell>
   );
 }
