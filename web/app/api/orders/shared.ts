@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { clearOrders, exportOrders, listOrders, printOrder, reviewOrder } from "../../../lib/dashboard/orders";
+import {
+  clearOrders,
+  dismissOrders,
+  exportOrders,
+  listOrders,
+  printOrder,
+  reviewOrder,
+} from "../../../lib/dashboard/orders";
 import type {
   DashboardOrderRepository,
   OrderEdits,
@@ -59,6 +66,15 @@ export async function handleExportOrders(
       "X-Failed-Ids": result.failed.join(","),
     },
   });
+}
+
+export async function handleDismissOrders(
+  request: Request,
+  repo: DashboardOrderRepository,
+): Promise<Response> {
+  const { ids } = (await request.json()) as { ids: string[] };
+  const dismissed = await dismissOrders(repo, ids);
+  return NextResponse.json({ dismissed });
 }
 
 export async function handleClearOrders(repo: DashboardOrderRepository): Promise<Response> {

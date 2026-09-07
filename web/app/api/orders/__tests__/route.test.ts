@@ -94,6 +94,14 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
   async deletePrintedBefore(): Promise<number> {
     throw new Error("not used");
   }
+
+  async recordProcessed(): Promise<void> {}
+
+  async deleteByIds(ids: string[]): Promise<void> {
+    for (const id of ids) {
+      this.orders.delete(id);
+    }
+  }
 }
 
 const store: StoreRecord = {

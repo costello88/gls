@@ -7,8 +7,20 @@ import type {
   OrderEdits,
   OrderFilter,
   OrderRecord,
+  ProcessedOrderEntry,
+  ProcessedReason,
   StoreRepository,
 } from "./types";
+
+function toProcessedEntry(order: OrderRecord, reason: ProcessedReason): ProcessedOrderEntry {
+  return {
+    storeId: order.storeId,
+    sourceOrderId: order.sourceOrderId,
+    orderNumber: order.orderNumber,
+    name: order.name,
+    reason,
+  };
+}
 
 export async function listOrders(
   repo: DashboardOrderRepository,
@@ -68,6 +80,7 @@ export async function printOrder(
 
   const csv = buildGlsImportCsv([{ ...order, senderNumber: store.customerNo }]);
   await repo.markPrinted(id, "", "");
+  await repo.recordProcessed([toProcessedEntry(order, "EXPORTED")]);
   await markSourceFulfilled(storeRepo, order);
   return { csv };
 }
@@ -92,6 +105,7 @@ export async function exportOrders(
       }
       rows.push({ ...order, senderNumber: store.customerNo });
       await repo.markPrinted(id, "", "");
+      await repo.recordProcessed([toProcessedEntry(order, "EXPORTED")]);
       await markSourceFulfilled(storeRepo, order);
     } catch {
       failed.push(id);
@@ -101,6 +115,27 @@ export async function exportOrders(
   return { csv: buildGlsImportCsv(rows), failed };
 }
 
+// Removes orders from the working list without exporting them, and records
+// them as handled so a sync never pulls them back in. For orders that were
+// already shipped some other way, or that should simply never be processed.
+export async function dismissOrders(
+  repo: DashboardOrderRepository,
+  ids: string[],
+): Promise<number> {
+  const entries: ProcessedOrderEntry[] = [];
+
+  for (const id of ids) {
+    const order = await repo.get(id);
+    if (order) {
+      entries.push(toProcessedEntry(order, "DISMISSED"));
+    }
+  }
+
+  await repo.recordProcessed(entries);
+  await repo.deleteByIds(ids);
+  return entries.length;
+}
+
 export async function clearOrders(repo: DashboardOrderRepository): Promise<void> {
   await repo.deleteAll();
 }
@@ -108,23 +143,11 @@ export async function clearOrders(repo: DashboardOrderRepository): Promise<void>
 const PRINTED_ORDER_RETENTION_DAYS = 1;
 
 // Printed orders are only ever needed again to re-download their CSV, so
-// they're removed a day after printing -- otherwise they'd keep piling up
-// in the "Geprint" tab every day the CSV isn't imported into GLS. This only
-// applies to stores that mark orders fulfilled on export: for stores that
-// don't (see markSourceFulfilled / usesFulfillmentWorkflow), the source
-// never learns an order was handled, so deleting our own record would make
-// the next sync re-import it as brand new. Those stores' printed orders are
-// kept indefinitely instead.
-export async function cleanupOldOrders(
-  repo: DashboardOrderRepository,
-  storeRepo: StoreRepository,
-): Promise<number> {
-  const stores = await storeRepo.list();
-  const eligibleStoreIds = stores.filter(usesFulfillmentWorkflow).map((store) => store.id);
-  if (eligibleStoreIds.length === 0) {
-    return 0;
-  }
-
+// they're removed a day after printing -- otherwise they'd keep piling up in
+// the "Geprint" tab every day the CSV isn't imported into GLS. Safe to delete
+// for every store: the permanent processed-order ledger, not this row, is
+// what stops a re-sync from importing them again.
+export async function cleanupOldOrders(repo: DashboardOrderRepository): Promise<number> {
   const cutoff = new Date(Date.now() - PRINTED_ORDER_RETENTION_DAYS * 24 * 60 * 60 * 1000);
-  return repo.deletePrintedBefore(cutoff, eligibleStoreIds);
+  return repo.deletePrintedBefore(cutoff);
 }

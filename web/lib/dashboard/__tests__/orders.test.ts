@@ -1,10 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanupOldOrders, clearOrders, exportOrders, listOrders, printOrder, reviewOrder } from "../orders";
+import {
+  cleanupOldOrders,
+  clearOrders,
+  dismissOrders,
+  exportOrders,
+  listOrders,
+  printOrder,
+  reviewOrder,
+} from "../orders";
 import type {
   DashboardOrderRepository,
   OrderEdits,
   OrderFilter,
   OrderRecord,
+  ProcessedOrderEntry,
   StoreRecord,
   StoreRepository,
 } from "../types";
@@ -44,6 +53,7 @@ function makeOrderRecord(overrides: Partial<OrderRecord> = {}): OrderRecord {
 class FakeDashboardOrderRepository implements DashboardOrderRepository {
   private orders = new Map<string, OrderRecord>();
   private printedAt = new Map<string, Date>();
+  private processed = new Map<string, ProcessedOrderEntry>();
 
   seed(order: OrderRecord) {
     this.orders.set(order.id, order);
@@ -96,11 +106,10 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
     this.orders.clear();
   }
 
-  async deletePrintedBefore(cutoff: Date, storeIds: string[]): Promise<number> {
+  async deletePrintedBefore(cutoff: Date): Promise<number> {
     let count = 0;
     for (const [id, order] of this.orders) {
       if (order.status !== "PRINTED") continue;
-      if (!storeIds.includes(order.storeId)) continue;
       const printedTime = this.printedAt.get(id) ?? new Date(0);
       if (printedTime < cutoff) {
         this.orders.delete(id);
@@ -108,6 +117,22 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
       }
     }
     return count;
+  }
+
+  async recordProcessed(entries: ProcessedOrderEntry[]): Promise<void> {
+    for (const entry of entries) {
+      this.processed.set(`${entry.storeId}:${entry.sourceOrderId}`, entry);
+    }
+  }
+
+  async deleteByIds(ids: string[]): Promise<void> {
+    for (const id of ids) {
+      this.orders.delete(id);
+    }
+  }
+
+  processedEntries(): ProcessedOrderEntry[] {
+    return [...this.processed.values()];
   }
 }
 
@@ -286,8 +311,8 @@ describe("exportOrders", () => {
 
   it("builds one combined CSV for every order and marks them all PRINTED", async () => {
     const repo = new FakeDashboardOrderRepository();
-    repo.seed(makeOrderRecord({ id: "1", name: "Jan Peeters" }));
-    repo.seed(makeOrderRecord({ id: "2", name: "Marie Dubois" }));
+    repo.seed(makeOrderRecord({ id: "1", sourceOrderId: "1001", name: "Jan Peeters" }));
+    repo.seed(makeOrderRecord({ id: "2", sourceOrderId: "1002", name: "Marie Dubois" }));
     const storeRepo = new FakeStoreRepository();
 
     const result = await exportOrders(repo, storeRepo, ["1", "2"]);
@@ -298,6 +323,8 @@ describe("exportOrders", () => {
     expect((await repo.get("1"))?.status).toBe("PRINTED");
     expect((await repo.get("2"))?.status).toBe("PRINTED");
     expect(mockedFulfillOrder).toHaveBeenCalledTimes(2);
+    expect(repo.processedEntries()).toHaveLength(2);
+    expect(repo.processedEntries()[0]).toMatchObject({ reason: "EXPORTED" });
   });
 
   it("skips orders that fail and still exports the rest", async () => {
@@ -327,7 +354,6 @@ describe("clearOrders", () => {
 describe("cleanupOldOrders", () => {
   it("deletes printed orders older than a day and leaves everything else", async () => {
     const repo = new FakeDashboardOrderRepository();
-    const storeRepo = new FakeStoreRepository();
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     repo.seed(makeOrderRecord({ id: "old-printed", status: "PRINTED" }));
     repo.seedPrintedAt("old-printed", twoDaysAgo);
@@ -335,25 +361,39 @@ describe("cleanupOldOrders", () => {
     repo.seedPrintedAt("recent-printed", new Date());
     repo.seed(makeOrderRecord({ id: "pending", status: "PENDING" }));
 
-    const deleted = await cleanupOldOrders(repo, storeRepo);
+    const deleted = await cleanupOldOrders(repo);
 
     expect(deleted).toBe(1);
     expect(await repo.get("old-printed")).toBeNull();
     expect(await repo.get("recent-printed")).not.toBeNull();
     expect(await repo.get("pending")).not.toBeNull();
   });
+});
 
-  it("never deletes printed orders for a store that doesn't use the fulfillment workflow (e.g. murad.nl)", async () => {
+describe("dismissOrders", () => {
+  it("removes the orders and records them as processed so a resync can't bring them back", async () => {
     const repo = new FakeDashboardOrderRepository();
-    const muradStore: StoreRecord = { ...store, id: "store-murad", shopDomain: "murad.nl" };
-    const storeRepo = new FakeStoreRepository([store, muradStore]);
-    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-    repo.seed(makeOrderRecord({ id: "old-printed-murad", storeId: "store-murad", status: "PRINTED" }));
-    repo.seedPrintedAt("old-printed-murad", twoDaysAgo);
+    repo.seed(makeOrderRecord({ id: "1", sourceOrderId: "1001", name: "Jan Peeters" }));
+    repo.seed(makeOrderRecord({ id: "2", sourceOrderId: "1002", name: "Marie Dubois" }));
 
-    const deleted = await cleanupOldOrders(repo, storeRepo);
+    const dismissed = await dismissOrders(repo, ["1", "2"]);
 
-    expect(deleted).toBe(0);
-    expect(await repo.get("old-printed-murad")).not.toBeNull();
+    expect(dismissed).toBe(2);
+    expect(await repo.get("1")).toBeNull();
+    expect(await repo.get("2")).toBeNull();
+    expect(repo.processedEntries()).toEqual([
+      expect.objectContaining({ sourceOrderId: "1001", reason: "DISMISSED" }),
+      expect.objectContaining({ sourceOrderId: "1002", reason: "DISMISSED" }),
+    ]);
+  });
+
+  it("ignores ids that no longer exist", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(makeOrderRecord({ id: "1", sourceOrderId: "1001" }));
+
+    const dismissed = await dismissOrders(repo, ["1", "missing"]);
+
+    expect(dismissed).toBe(1);
+    expect(repo.processedEntries()).toHaveLength(1);
   });
 });

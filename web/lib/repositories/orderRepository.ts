@@ -4,6 +4,7 @@ import type {
   OrderEdits,
   OrderFilter,
   OrderRecord,
+  ProcessedOrderEntry,
 } from "../dashboard/types";
 import type { OrderRecordInput } from "../ingest/types";
 
@@ -33,9 +34,15 @@ function toOrderRecord(order: PrismaOrderRow): OrderRecord {
 }
 
 export class PrismaOrderRepository implements DashboardOrderRepository {
+  // "Have we ever seen this order before?" -- checks both the working list and
+  // the permanent processed-order ledger, so an order that was exported and
+  // later cleaned up locally is never re-imported.
   async exists(storeId: string, sourceOrderId: string): Promise<boolean> {
-    const count = await prisma.order.count({ where: { storeId, sourceOrderId } });
-    return count > 0;
+    const [openCount, processedCount] = await Promise.all([
+      prisma.order.count({ where: { storeId, sourceOrderId } }),
+      prisma.processedOrder.count({ where: { storeId, sourceOrderId } }),
+    ]);
+    return openCount > 0 || processedCount > 0;
   }
 
   async create(
@@ -99,10 +106,21 @@ export class PrismaOrderRepository implements DashboardOrderRepository {
     await prisma.order.deleteMany({});
   }
 
-  async deletePrintedBefore(cutoff: Date, storeIds: string[]): Promise<number> {
+  async deletePrintedBefore(cutoff: Date): Promise<number> {
     const { count } = await prisma.order.deleteMany({
-      where: { status: "PRINTED", updatedAt: { lt: cutoff }, storeId: { in: storeIds } },
+      where: { status: "PRINTED", updatedAt: { lt: cutoff } },
     });
     return count;
+  }
+
+  async recordProcessed(entries: ProcessedOrderEntry[]): Promise<void> {
+    if (entries.length === 0) {
+      return;
+    }
+    await prisma.processedOrder.createMany({ data: entries, skipDuplicates: true });
+  }
+
+  async deleteByIds(ids: string[]): Promise<void> {
+    await prisma.order.deleteMany({ where: { id: { in: ids } } });
   }
 }

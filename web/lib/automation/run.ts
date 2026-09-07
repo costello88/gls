@@ -32,7 +32,7 @@ export async function runAutomatedSync(
     results.push({ storeId: store.id, sync });
   }
 
-  const deletedOldOrders = await cleanupOldOrders(orderRepo, storeRepo);
+  const deletedOldOrders = await cleanupOldOrders(orderRepo);
 
   return { stores: results, deletedOldOrders };
 }

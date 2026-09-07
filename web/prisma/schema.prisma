@@ -43,6 +43,22 @@ model Store {
   updatedAt           DateTime  @updatedAt
 }
 
+// Permanent record of source orders that have been handled (exported to a
+// CSV, or explicitly dismissed). Deliberately survives both "Wis alles" and
+// the daily cleanup of printed orders: it is the only thing that stops an
+// order the webshop still reports as open from being re-imported forever.
+model ProcessedOrder {
+  id             String   @id @default(cuid())
+  storeId        String
+  sourceOrderId  String
+  orderNumber    String
+  name           String
+  reason         String
+  processedAt    DateTime @default(now())
+
+  @@unique([storeId, sourceOrderId])
+}
+
 model Order {
   id             String      @id @default(cuid())
   store          Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)

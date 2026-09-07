@@ -8,6 +8,7 @@ import { SyncButton } from "./SyncButton";
 import { PrintButton } from "./PrintButton";
 import { ClearOrdersButton } from "./ClearOrdersButton";
 import { BulkPrintButton } from "./BulkPrintButton";
+import { DismissOrdersButton } from "./DismissOrdersButton";
 import { ViewLabelButton } from "./ViewLabelButton";
 import { ConfirmLabelButton } from "./ConfirmLabelButton";
 import { DeleteLabelButton } from "./DeleteLabelButton";
@@ -71,7 +72,10 @@ export default async function DashboardPage({
           <SyncButton />
           <ClearOrdersButton />
           {(activeStatus === "PENDING" || activeStatus === "ERROR") && (
-            <BulkPrintButton orders={orders.map((order) => ({ id: order.id, name: order.name }))} />
+            <>
+              <DismissOrdersButton orderIds={orders.map((order) => order.id)} />
+              <BulkPrintButton orders={orders.map((order) => ({ id: order.id, name: order.name }))} />
+            </>
           )}
         </div>
       </div>

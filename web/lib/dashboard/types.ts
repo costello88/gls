@@ -35,7 +35,19 @@ export interface DashboardOrderRepository extends OrderRepository {
   markError(id: string, message: string): Promise<OrderRecord>;
   listPrintable(storeIds: string[]): Promise<OrderRecord[]>;
   deleteAll(): Promise<void>;
-  deletePrintedBefore(cutoff: Date, storeIds: string[]): Promise<number>;
+  deletePrintedBefore(cutoff: Date): Promise<number>;
+  recordProcessed(entries: ProcessedOrderEntry[]): Promise<void>;
+  deleteByIds(ids: string[]): Promise<void>;
+}
+
+export type ProcessedReason = "EXPORTED" | "DISMISSED";
+
+export interface ProcessedOrderEntry {
+  storeId: string;
+  sourceOrderId: string;
+  orderNumber: string;
+  name: string;
+  reason: ProcessedReason;
 }
 
 export type StoreType = "SHOPIFY" | "WOOCOMMERCE";
