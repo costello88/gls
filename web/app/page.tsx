@@ -71,11 +71,11 @@ export default async function DashboardPage({
         <div className="flex items-center gap-2">
           <SyncButton />
           <ClearOrdersButton />
+          {activeStatus !== "PRINTED" && (
+            <DismissOrdersButton orderIds={orders.map((order) => order.id)} />
+          )}
           {(activeStatus === "PENDING" || activeStatus === "ERROR") && (
-            <>
-              <DismissOrdersButton orderIds={orders.map((order) => order.id)} />
-              <BulkPrintButton orders={orders.map((order) => ({ id: order.id, name: order.name }))} />
-            </>
+            <BulkPrintButton orders={orders.map((order) => ({ id: order.id, name: order.name }))} />
           )}
         </div>
       </div>
