@@ -73,8 +73,12 @@ export async function handleDismissOrders(
   repo: DashboardOrderRepository,
 ): Promise<Response> {
   const { ids } = (await request.json()) as { ids: string[] };
-  const dismissed = await dismissOrders(repo, ids);
-  return NextResponse.json({ dismissed });
+  try {
+    const dismissed = await dismissOrders(repo, ids);
+    return NextResponse.json({ dismissed });
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+  }
 }
 
 export async function handleClearOrders(repo: DashboardOrderRepository): Promise<Response> {
