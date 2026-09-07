@@ -116,10 +116,11 @@ class FakeAutomationOrderRepository implements DashboardOrderRepository {
     this.orders.clear();
   }
 
-  async deletePrintedBefore(cutoff: Date): Promise<number> {
+  async deletePrintedBefore(cutoff: Date, storeIds: string[]): Promise<number> {
     let count = 0;
     for (const [id, order] of this.orders) {
       if (order.status !== "PRINTED") continue;
+      if (!storeIds.includes(order.storeId)) continue;
       const printedTime = this.printedAt.get(id) ?? new Date(0);
       if (printedTime < cutoff) {
         this.orders.delete(id);

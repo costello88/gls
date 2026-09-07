@@ -96,10 +96,11 @@ class FakeDashboardOrderRepository implements DashboardOrderRepository {
     this.orders.clear();
   }
 
-  async deletePrintedBefore(cutoff: Date): Promise<number> {
+  async deletePrintedBefore(cutoff: Date, storeIds: string[]): Promise<number> {
     let count = 0;
     for (const [id, order] of this.orders) {
       if (order.status !== "PRINTED") continue;
+      if (!storeIds.includes(order.storeId)) continue;
       const printedTime = this.printedAt.get(id) ?? new Date(0);
       if (printedTime < cutoff) {
         this.orders.delete(id);
@@ -326,6 +327,7 @@ describe("clearOrders", () => {
 describe("cleanupOldOrders", () => {
   it("deletes printed orders older than a day and leaves everything else", async () => {
     const repo = new FakeDashboardOrderRepository();
+    const storeRepo = new FakeStoreRepository();
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     repo.seed(makeOrderRecord({ id: "old-printed", status: "PRINTED" }));
     repo.seedPrintedAt("old-printed", twoDaysAgo);
@@ -333,11 +335,25 @@ describe("cleanupOldOrders", () => {
     repo.seedPrintedAt("recent-printed", new Date());
     repo.seed(makeOrderRecord({ id: "pending", status: "PENDING" }));
 
-    const deleted = await cleanupOldOrders(repo);
+    const deleted = await cleanupOldOrders(repo, storeRepo);
 
     expect(deleted).toBe(1);
     expect(await repo.get("old-printed")).toBeNull();
     expect(await repo.get("recent-printed")).not.toBeNull();
     expect(await repo.get("pending")).not.toBeNull();
+  });
+
+  it("never deletes printed orders for a store that doesn't use the fulfillment workflow (e.g. murad.nl)", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    const muradStore: StoreRecord = { ...store, id: "store-murad", shopDomain: "murad.nl" };
+    const storeRepo = new FakeStoreRepository([store, muradStore]);
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    repo.seed(makeOrderRecord({ id: "old-printed-murad", storeId: "store-murad", status: "PRINTED" }));
+    repo.seedPrintedAt("old-printed-murad", twoDaysAgo);
+
+    const deleted = await cleanupOldOrders(repo, storeRepo);
+
+    expect(deleted).toBe(0);
+    expect(await repo.get("old-printed-murad")).not.toBeNull();
   });
 });

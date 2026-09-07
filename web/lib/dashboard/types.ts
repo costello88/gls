@@ -35,7 +35,7 @@ export interface DashboardOrderRepository extends OrderRepository {
   markError(id: string, message: string): Promise<OrderRecord>;
   listPrintable(storeIds: string[]): Promise<OrderRecord[]>;
   deleteAll(): Promise<void>;
-  deletePrintedBefore(cutoff: Date): Promise<number>;
+  deletePrintedBefore(cutoff: Date, storeIds: string[]): Promise<number>;
 }
 
 export type StoreType = "SHOPIFY" | "WOOCOMMERCE";
