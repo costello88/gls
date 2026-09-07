@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanupOldOrders, clearOrders, exportOrders, listOrders, printOrder, reviewOrder } from "../orders";
 import type {
   DashboardOrderRepository,
@@ -8,6 +8,14 @@ import type {
   StoreRecord,
   StoreRepository,
 } from "../types";
+
+vi.mock("../../ingest/fulfill", () => ({
+  fulfillOrder: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { fulfillOrder } from "../../ingest/fulfill";
+
+const mockedFulfillOrder = vi.mocked(fulfillOrder);
 
 function makeOrderRecord(overrides: Partial<OrderRecord> = {}): OrderRecord {
   return {
@@ -209,6 +217,10 @@ describe("reviewOrder", () => {
 });
 
 describe("printOrder", () => {
+  afterEach(() => {
+    mockedFulfillOrder.mockClear();
+  });
+
   it("builds a GLS import CSV for the order and marks it PRINTED", async () => {
     const repo = new FakeDashboardOrderRepository();
     repo.seed(makeOrderRecord({ id: "1" }));
@@ -222,6 +234,31 @@ describe("printOrder", () => {
     expect(updated?.status).toBe("PRINTED");
     expect(updated?.label).toBe("");
     expect(updated?.trackingLink).toBe("");
+  });
+
+  it("marks the order fulfilled at the source store so it doesn't resurrect on the next sync", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(makeOrderRecord({ id: "1", sourceOrderId: "1001" }));
+    const storeRepo = new FakeStoreRepository();
+
+    await printOrder(repo, storeRepo, "1");
+
+    expect(mockedFulfillOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "store-1", type: "SHOPIFY" }),
+      "1001",
+    );
+  });
+
+  it("still returns the CSV and keeps the order PRINTED if the fulfillment write-back fails", async () => {
+    const repo = new FakeDashboardOrderRepository();
+    repo.seed(makeOrderRecord({ id: "1" }));
+    const storeRepo = new FakeStoreRepository();
+    mockedFulfillOrder.mockRejectedValueOnce(new Error("Shopify unavailable"));
+
+    const result = await printOrder(repo, storeRepo, "1");
+
+    expect(result.csv).toContain("Jan Peeters");
+    expect((await repo.get("1"))?.status).toBe("PRINTED");
   });
 
   it("throws when the order doesn't exist", async () => {
@@ -241,6 +278,10 @@ describe("printOrder", () => {
 });
 
 describe("exportOrders", () => {
+  afterEach(() => {
+    mockedFulfillOrder.mockClear();
+  });
+
   it("builds one combined CSV for every order and marks them all PRINTED", async () => {
     const repo = new FakeDashboardOrderRepository();
     repo.seed(makeOrderRecord({ id: "1", name: "Jan Peeters" }));
@@ -254,6 +295,7 @@ describe("exportOrders", () => {
     expect(result.csv).toContain("Marie Dubois");
     expect((await repo.get("1"))?.status).toBe("PRINTED");
     expect((await repo.get("2"))?.status).toBe("PRINTED");
+    expect(mockedFulfillOrder).toHaveBeenCalledTimes(2);
   });
 
   it("skips orders that fail and still exports the rest", async () => {

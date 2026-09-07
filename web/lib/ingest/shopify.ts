@@ -57,7 +57,7 @@ interface FulfillmentOrder {
 export async function fulfillShopifyOrder(
   store: ShopifyStoreConfig,
   sourceOrderId: string,
-  trackingNumber: string,
+  trackingNumber?: string,
 ): Promise<void> {
   const headers = {
     "X-Shopify-Access-Token": store.shopifyAccessToken,
@@ -84,7 +84,7 @@ export async function fulfillShopifyOrder(
     body: JSON.stringify({
       fulfillment: {
         line_items_by_fulfillment_order: [{ fulfillment_order_id: openFulfillmentOrder.id }],
-        tracking_info: { number: trackingNumber, company: "GLS" },
+        ...(trackingNumber ? { tracking_info: { number: trackingNumber, company: "GLS" } } : {}),
         notify_customer: true,
       },
     }),

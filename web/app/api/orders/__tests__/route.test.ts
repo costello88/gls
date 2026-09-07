@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type {
   DashboardOrderRepository,
   OrderFilter,
@@ -13,6 +13,10 @@ import {
   handlePrintOrder,
   handleReviewOrder,
 } from "../shared";
+
+vi.mock("../../../../lib/ingest/fulfill", () => ({
+  fulfillOrder: vi.fn().mockResolvedValue(undefined),
+}));
 
 function makeOrderRecord(overrides: Partial<OrderRecord> = {}): OrderRecord {
   return {

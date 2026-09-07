@@ -53,6 +53,22 @@ describe("fulfillShopifyOrder", () => {
     expect(body.fulfillment.tracking_info).toEqual({ number: "11850080202728", company: "GLS" });
   });
 
+  it("fulfills without tracking info when no tracking number is given", async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        json: async () => ({ fulfillment_orders: [{ id: 555, status: "open" }] }),
+      })
+      .mockResolvedValueOnce({ json: async () => ({}) });
+    global.fetch = mockFetch as unknown as typeof fetch;
+
+    await fulfillShopifyOrder(shopifyStore, "1001");
+
+    const [, options] = mockFetch.mock.calls[1];
+    const body = JSON.parse(options.body);
+    expect(body.fulfillment.tracking_info).toBeUndefined();
+  });
+
   it("does nothing if there is no open fulfillment order", async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce({
       json: async () => ({ fulfillment_orders: [{ id: 555, status: "closed" }] }),

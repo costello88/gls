@@ -1,4 +1,6 @@
 import { buildGlsImportCsv } from "../gls/importCsv";
+import { fulfillOrder } from "../ingest/fulfill";
+import { toStoreConfig } from "./storeConfig";
 import type {
   DashboardOrderRepository,
   OrderEdits,
@@ -31,6 +33,23 @@ export async function reviewOrder(
   });
 }
 
+// Marks the order fulfilled/completed at the source store so future syncs
+// don't keep re-fetching it as unfulfilled/processing -- without this,
+// exported orders that later get cleaned up locally (see cleanupOldOrders)
+// would resurrect as "new" on the next sync since the source never learned
+// they were handled. Non-fatal: a failed write-back must never block the
+// CSV export or revert the order's PRINTED status.
+async function markSourceFulfilled(storeRepo: StoreRepository, order: OrderRecord): Promise<void> {
+  try {
+    const store = await storeRepo.get(order.storeId);
+    if (store) {
+      await fulfillOrder(toStoreConfig(store), order.sourceOrderId);
+    }
+  } catch {
+    // ignore -- see comment above
+  }
+}
+
 export async function printOrder(
   repo: DashboardOrderRepository,
   storeRepo: StoreRepository,
@@ -48,6 +67,7 @@ export async function printOrder(
 
   const csv = buildGlsImportCsv([{ ...order, senderNumber: store.customerNo }]);
   await repo.markPrinted(id, "", "");
+  await markSourceFulfilled(storeRepo, order);
   return { csv };
 }
 
@@ -71,6 +91,7 @@ export async function exportOrders(
       }
       rows.push({ ...order, senderNumber: store.customerNo });
       await repo.markPrinted(id, "", "");
+      await markSourceFulfilled(storeRepo, order);
     } catch {
       failed.push(id);
     }
