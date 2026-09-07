@@ -42,7 +42,7 @@ export async function reviewOrder(
 async function markSourceFulfilled(storeRepo: StoreRepository, order: OrderRecord): Promise<void> {
   try {
     const store = await storeRepo.get(order.storeId);
-    if (store) {
+    if (store && store.markFulfilledOnExport) {
       await fulfillOrder(toStoreConfig(store), order.sourceOrderId);
     }
   } catch {
@@ -108,7 +108,11 @@ const PRINTED_ORDER_RETENTION_DAYS = 1;
 
 // Printed orders are only ever needed again to re-download their CSV, so
 // they're removed a day after printing -- otherwise they'd keep piling up
-// in the "Geprint" tab every day the CSV isn't imported into GLS.
+// in the "Geprint" tab every day the CSV isn't imported into GLS. This only
+// applies to stores that mark orders fulfilled on export: for stores that
+// don't (see markSourceFulfilled), the source never learns an order was
+// handled, so deleting our own record would make the next sync re-import it
+// as brand new. Those stores' printed orders are kept indefinitely instead.
 export async function cleanupOldOrders(repo: DashboardOrderRepository): Promise<number> {
   const cutoff = new Date(Date.now() - PRINTED_ORDER_RETENTION_DAYS * 24 * 60 * 60 * 1000);
   return repo.deletePrintedBefore(cutoff);

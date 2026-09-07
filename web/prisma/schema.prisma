@@ -27,6 +27,7 @@ model Store {
   type               StoreType
   name               String
   automationEnabled  Boolean   @default(false)
+  markFulfilledOnExport Boolean @default(true)
   customerNo         String
   defaultWeightKg    Float     @default(1.0)
 

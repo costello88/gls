@@ -101,7 +101,11 @@ export class PrismaOrderRepository implements DashboardOrderRepository {
 
   async deletePrintedBefore(cutoff: Date): Promise<number> {
     const { count } = await prisma.order.deleteMany({
-      where: { status: "PRINTED", updatedAt: { lt: cutoff } },
+      where: {
+        status: "PRINTED",
+        updatedAt: { lt: cutoff },
+        store: { markFulfilledOnExport: true },
+      },
     });
     return count;
   }

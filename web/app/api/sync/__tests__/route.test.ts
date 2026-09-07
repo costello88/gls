@@ -39,6 +39,7 @@ const store1: StoreRecord = {
   type: "SHOPIFY",
   name: "Revitalash",
   automationEnabled: false,
+  markFulfilledOnExport: true,
   customerNo: "11850079",
   defaultWeightKg: 1.0,
   shopDomain: "revitalash.myshopify.com",

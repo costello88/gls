@@ -2,6 +2,7 @@ import { listStores } from "../../lib/dashboard/stores";
 import { PrismaStoreRepository } from "../../lib/repositories/storeRepository";
 import { AppShell } from "../components/AppShell";
 import { DeleteStoreButton } from "./DeleteStoreButton";
+import { MarkFulfilledToggle } from "./MarkFulfilledToggle";
 import { StoreForm } from "./StoreForm";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,12 @@ export default async function SettingsPage() {
       <h1 className="mb-6 text-xl font-semibold text-slate-900">Instellingen</h1>
 
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Winkels</h2>
+      <p className="mb-3 text-sm text-slate-500">
+        &quot;Afhandelen na export&quot; markeert een bestelling bij de webshop als afgehandeld zodra de
+        CSV is gedownload, zodat hij niet steeds opnieuw wordt opgehaald. Zet dit uit als deze webshop
+        niet met die status werkt -- geëxporteerde bestellingen blijven dan wel permanent in het tabblad
+        &quot;Geprint&quot; staan in plaats van na 1 dag te verdwijnen.
+      </p>
       <ul className="mb-8 space-y-2">
         {stores.map((store) => (
           <li
@@ -32,6 +39,10 @@ export default async function SettingsPage() {
                 }`}
               >
                 automatisch: {store.automationEnabled ? "aan" : "uit"}
+              </span>
+              <span className="flex items-center gap-2 text-sm text-slate-600">
+                Afhandelen na export
+                <MarkFulfilledToggle storeId={store.id} enabled={store.markFulfilledOnExport} />
               </span>
               <DeleteStoreButton storeId={store.id} storeName={store.name} />
             </div>

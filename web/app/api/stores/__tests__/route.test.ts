@@ -21,6 +21,7 @@ class FakeStoreRepository implements StoreRepository {
       type: input.type,
       name: input.name,
       automationEnabled: input.automationEnabled ?? false,
+      markFulfilledOnExport: input.markFulfilledOnExport ?? true,
       customerNo: input.customerNo,
       defaultWeightKg: input.defaultWeightKg,
       shopDomain: input.shopDomain ?? null,

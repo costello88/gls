@@ -51,6 +51,7 @@ export async function updateStore(
     customerNo: edits.customerNo ?? existing.customerNo,
     defaultWeightKg: edits.defaultWeightKg ?? existing.defaultWeightKg,
     automationEnabled: edits.automationEnabled ?? existing.automationEnabled,
+    markFulfilledOnExport: edits.markFulfilledOnExport ?? existing.markFulfilledOnExport,
     shopDomain: edits.shopDomain ?? nullToUndefined(existing.shopDomain),
     shopifyAccessToken: edits.shopifyAccessToken ?? nullToUndefined(existing.shopifyAccessToken),
     siteUrl: edits.siteUrl ?? nullToUndefined(existing.siteUrl),

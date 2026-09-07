@@ -45,6 +45,7 @@ export interface StoreRecord {
   type: StoreType;
   name: string;
   automationEnabled: boolean;
+  markFulfilledOnExport: boolean;
   customerNo: string;
   defaultWeightKg: number;
   shopDomain: string | null;
@@ -60,6 +61,7 @@ export interface StoreInput {
   customerNo: string;
   defaultWeightKg: number;
   automationEnabled?: boolean;
+  markFulfilledOnExport?: boolean;
   shopDomain?: string;
   shopifyAccessToken?: string;
   siteUrl?: string;

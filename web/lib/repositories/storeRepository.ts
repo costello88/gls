@@ -6,6 +6,7 @@ function toStoreRecord(store: {
   type: string;
   name: string;
   automationEnabled: boolean;
+  markFulfilledOnExport: boolean;
   customerNo: string;
   defaultWeightKg: number;
   shopDomain: string | null;
